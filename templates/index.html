@@ -1,0 +1,3681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOLO GURU — AI Book Teacher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════
+   HOLO GURU — CSS Variables & Reset
+═══════════════════════════════════════════════════════ */
+:root {
+  --cyan:       #00ffff;
+  --cyan2:      #00d4ff;
+  --cyan-dim:   rgba(0,255,255,0.35);
+  --bg:         #000000;
+  --bg2:        #020c14;
+  --bg3:        #041420;
+  --bg4:        #061828;
+  --border:     rgba(0,255,255,0.2);
+  --border2:    rgba(0,255,255,0.4);
+  --text:       #e0f8ff;
+  --text-dim:   rgba(180,240,255,0.5);
+  --green:      #00ff88;
+  --red:        #ff3355;
+  --yellow:     #ffaa00;
+  --gold:       #c9a84c;
+  --gold2:      #e8c96a;
+  --radius:     10px;
+  --font-holo:  'Orbitron', sans-serif;
+  --font-body:  'DM Sans', sans-serif;
+  --font-mono:  'DM Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BACKGROUND — Animated Grid + Particles
+═══════════════════════════════════════════════════════ */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    linear-gradient(rgba(0,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,255,0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridScroll 25s linear infinite;
+}
+@keyframes gridScroll {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 0 40px, 40px 0; }
+}
+
+.bg-particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.pt {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: var(--cyan);
+  border-radius: 50%;
+  opacity: 0;
+  box-shadow: 0 0 4px var(--cyan);
+}
+
+/* ═══════════════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════════════ */
+header {
+  position: relative;
+  z-index: 50;
+  background: rgba(0,8,20,0.92);
+  border-bottom: 1px solid var(--border2);
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  backdrop-filter: blur(12px);
+}
+
+.holo-title {
+  font-family: var(--font-holo);
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--cyan);
+  letter-spacing: 4px;
+  text-shadow: 0 0 8px var(--cyan), 0 0 20px var(--cyan), 0 0 40px rgba(0,255,255,0.4);
+  animation: titlePulse 2.5s ease-in-out infinite;
+  white-space: nowrap;
+}
+@keyframes titlePulse {
+  0%,100% { text-shadow: 0 0 8px var(--cyan), 0 0 20px var(--cyan); }
+  50%     { text-shadow: 0 0 12px var(--cyan), 0 0 30px var(--cyan), 0 0 60px rgba(0,255,255,0.5); }
+}
+.holo-subtitle {
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  margin-left: 2px;
+  white-space: nowrap;
+}
+
+.new-chat-btn {
+  background: rgba(0,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.new-chat-btn:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 8px var(--cyan-dim); }
+
+.server-status {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  background: rgba(0,8,20,0.8);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.server-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: dotPulse 2s infinite;
+}
+@keyframes dotPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ═══════════════════════════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════════════════════════════ */
+.layout {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  height: calc(100vh - 61px);
+}
+
+/* ═══════════════════════════════════════════════════════
+   SIDEBAR — Book Library
+═══════════════════════════════════════════════════════ */
+.sidebar {
+  width: 280px;
+  min-width: 240px;
+  background: rgba(0,8,20,0.90);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+.sidebar-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-header h2 {
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+.book-count {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--cyan);
+  margin-top: 3px;
+  text-shadow: 0 0 6px var(--cyan-dim);
+}
+
+.upload-zone {
+  margin: 12px 14px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 18px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(0,255,255,0.02);
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag {
+  border-color: var(--cyan);
+  background: rgba(0,255,255,0.05);
+  box-shadow: 0 0 12px var(--cyan-dim);
+}
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-icon { font-size: 24px; margin-bottom: 5px; }
+.upload-zone p { font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; }
+.upload-zone strong { color: var(--cyan); }
+.upload-progress {
+  height: 2px;
+  background: rgba(0,255,255,0.1);
+  border-radius: 2px;
+  margin: 6px 14px 0;
+  overflow: hidden;
+  display: none;
+}
+.upload-progress .bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), #0088ff);
+  width: 0%;
+  transition: width 0.3s;
+  box-shadow: 0 0 6px var(--cyan);
+}
+
+.filter-info {
+  margin: 0 14px 8px;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+.filter-info span { color: var(--cyan); }
+
+.books-list { flex: 1; overflow-y: auto; padding: 6px 8px; }
+.books-list::-webkit-scrollbar { width: 3px; }
+.books-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.book-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 9px; border-radius: 8px;
+  cursor: pointer; transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.book-item:hover { background: rgba(0,255,255,0.05); border-color: var(--border); }
+.book-item.selected { background: rgba(0,255,255,0.08); border-color: var(--cyan-dim); box-shadow: 0 0 8px rgba(0,255,255,0.1); }
+.book-item .book-icon { font-size: 18px; flex-shrink: 0; }
+.book-item .book-info { flex: 1; min-width: 0; }
+.book-item .book-title { font-size: 0.8rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.book-item .book-id { font-size: 0.62rem; color: var(--text-dim); font-family: var(--font-mono); }
+.book-item .del-btn {
+  background: none; border: none; color: var(--text-dim);
+  cursor: pointer; padding: 2px 5px; border-radius: 4px;
+  font-size: 13px; flex-shrink: 0; transition: color 0.15s;
+}
+.book-item .del-btn:hover { color: var(--red); }
+
+/* ═══════════════════════════════════════════════════════
+   HOLOGRAM PANEL — Center Column
+═══════════════════════════════════════════════════════ */
+.holo-panel {
+  width: 320px;
+  min-width: 280px;
+  flex-shrink: 0;
+  background: rgba(0,4,12,0.95);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ambient floor glow */
+.holo-panel::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 280px; height: 200px;
+  background: radial-gradient(ellipse at bottom, rgba(0,200,255,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Holo status badge — top */
+.holo-status {
+  position: absolute;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-holo);
+  font-size: 0.58rem;
+  letter-spacing: 3px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: rgba(0,8,20,0.8);
+  border: 1px solid var(--border);
+  z-index: 20;
+  white-space: nowrap;
+  transition: all 0.4s;
+}
+.holo-status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+/* Hologram states */
+.holo-panel[data-state="idle"]      .holo-status { color: rgba(0,180,255,0.4); }
+.holo-panel[data-state="idle"]      .holo-status-dot { background:#555; box-shadow:none; }
+.holo-panel[data-state="standby"]   .holo-status { color: var(--green); border-color: rgba(0,255,136,0.3); }
+.holo-panel[data-state="standby"]   .holo-status-dot { background:var(--green); box-shadow:0 0 8px var(--green); animation:dotPulse 2s infinite; }
+.holo-panel[data-state="listening"] .holo-status { color: var(--green); border-color: rgba(0,255,136,0.5); box-shadow:0 0 12px rgba(0,255,136,0.2); }
+.holo-panel[data-state="listening"] .holo-status-dot { background:var(--green); box-shadow:0 0 10px var(--green); animation:statusBlink 0.8s infinite; }
+.holo-panel[data-state="thinking"]  .holo-status { color: var(--yellow); border-color:rgba(255,170,0,0.4); }
+.holo-panel[data-state="thinking"]  .holo-status-dot { background:var(--yellow); box-shadow:0 0 8px var(--yellow); animation:dotPulse 0.5s infinite; }
+.holo-panel[data-state="speaking"]  .holo-status { color: var(--cyan); border-color: var(--border2); box-shadow:0 0 15px rgba(0,255,255,0.25); }
+.holo-panel[data-state="speaking"]  .holo-status-dot { background:var(--cyan); box-shadow:0 0 12px var(--cyan); animation:talkPulse 0.5s ease-in-out infinite; }
+@keyframes statusBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes talkPulse   { 0%,100%{transform:scale(1)} 50%{transform:scale(1.4)} }
+
+/* ── Holographic Figure ── */
+.holo-figure-wrap {
+  position: relative;
+  z-index: 8;
+  width: 260px;
+  height: 420px;
+  flex-shrink: 0;
+  margin-bottom: -4px;
+  transform-style: preserve-3d;
+  transform-origin: 50% 60%;
+  transition: transform 0.18s ease-out, filter 0.18s ease-out;
+}
+.holo-figure-wrap.gesture-selected {
+  filter: drop-shadow(0 0 22px rgba(0,255,255,0.95)) brightness(1.18);
+}
+.holo-gesture-badge {
+  position:absolute; top:50px; left:50%; transform:translateX(-50%);
+  z-index:21; min-width:150px; text-align:center;
+  padding:5px 10px; border-radius:12px;
+  background:rgba(0,8,20,.72); border:1px solid rgba(0,255,255,.2);
+  color:rgba(150,235,255,.72); font-family:var(--font-mono);
+  font-size:.58rem; letter-spacing:1.1px; pointer-events:none;
+  opacity:.35; transition:opacity .15s,border-color .15s,color .15s;
+}
+.holo-gesture-badge.active { opacity:1; color:var(--cyan); border-color:rgba(0,255,255,.55); }
+
+/* VIDEO face — shows hologram.mp4 */
+.holo-video {
+  position: absolute;
+  top: 20px; left: 50%;
+  transform: translateX(-50%);
+  width: 210px; height: 280px;
+  object-fit: cover;
+  border-radius: 50% 50% 45% 45%;
+  opacity: 0;
+  transition: opacity 0.7s cubic-bezier(0.68,-0.55,0.27,1.55), transform 0.7s;
+  transform: translateX(-50%) scale(0);
+  filter:
+    drop-shadow(0 0 18px rgba(0,255,255,0.9))
+    drop-shadow(0 0 40px rgba(0,200,255,0.6))
+    brightness(1.15) contrast(1.1);
+  z-index: 5;
+}
+.holo-panel[data-state="idle"] .holo-video      { opacity: 0; transform: translateX(-50%) scale(0); }
+.holo-panel[data-state="standby"] .holo-video   { opacity: 0.80; transform: translateX(-50%) scale(1); animation: faceFloat 4s ease-in-out infinite; }
+.holo-panel[data-state="listening"] .holo-video { opacity: 0.85; transform: translateX(-50%) scale(1); animation: faceFloat 4s ease-in-out infinite; }
+.holo-panel[data-state="thinking"] .holo-video  { opacity: 0.75; transform: translateX(-50%) scale(1); animation: faceFloat 4s ease-in-out infinite; }
+.holo-panel[data-state="speaking"] .holo-video  { opacity: 1;    transform: translateX(-50%) scale(1); animation: faceTalk 0.5s ease-in-out infinite alternate; }
+
+@keyframes faceFloat {
+  0%,100% { transform: translateX(-50%) translateY(0px); }
+  50%     { transform: translateX(-50%) translateY(-10px); }
+}
+@keyframes faceTalk {
+  0%   { transform: translateX(-50%) scale(1) rotateY(0deg); }
+  100% { transform: translateX(-50%) scale(1.025) rotateY(-2deg); }
+}
+
+/* Scanline overlay on video */
+.holo-scan {
+  position: absolute;
+  top: 20px; left: 50%;
+  transform: translateX(-50%);
+  width: 210px; height: 280px;
+  border-radius: 50% 50% 45% 45%;
+  pointer-events: none;
+  z-index: 6;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,255,255,0.04) 2px, rgba(0,255,255,0.04) 3px
+  );
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.holo-panel:not([data-state="idle"]) .holo-scan { opacity: 1; }
+
+/* Glow aura */
+.holo-glow {
+  position: absolute;
+  top: 50px; left: 50%;
+  transform: translateX(-50%);
+  width: 220px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0,255,255,0.18) 0%, transparent 70%);
+  filter: blur(20px);
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 0.5s;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+.holo-panel:not([data-state="idle"]) .holo-glow { opacity: 1; }
+.holo-panel[data-state="speaking"] .holo-glow   { opacity: 1; filter: blur(15px); }
+@keyframes glowPulse { 0%,100%{opacity:0.7} 50%{opacity:1} }
+
+/* Sound waves — visible only when speaking */
+.sound-waves {
+  position: absolute;
+  bottom: 100px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 4px; align-items: flex-end;
+  height: 40px;
+  z-index: 9;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.holo-panel[data-state="speaking"] .sound-waves { opacity: 1; }
+.sw-bar {
+  width: 4px;
+  border-radius: 3px;
+  background: linear-gradient(to top, var(--cyan), #0066ff);
+  box-shadow: 0 0 6px var(--cyan);
+}
+.sw-bar:nth-child(1) { height:14px; animation:sw 0.4s ease-in-out infinite alternate 0.0s; }
+.sw-bar:nth-child(2) { height:24px; animation:sw 0.4s ease-in-out infinite alternate 0.1s; }
+.sw-bar:nth-child(3) { height:36px; animation:sw 0.4s ease-in-out infinite alternate 0.2s; }
+.sw-bar:nth-child(4) { height:28px; animation:sw 0.4s ease-in-out infinite alternate 0.1s; }
+.sw-bar:nth-child(5) { height:16px; animation:sw 0.4s ease-in-out infinite alternate 0.0s; }
+@keyframes sw { from{transform:scaleY(0.3); opacity:0.5;} to{transform:scaleY(1); opacity:1;} }
+
+/* Floating particles on holo panel */
+.holo-pt {
+  position: absolute;
+  width: 2px; height: 2px;
+  background: var(--cyan);
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 4px var(--cyan);
+  opacity: 0;
+  z-index: 7;
+}
+
+/* ── Rotating Base Rings ── */
+.holo-base {
+  position: relative;
+  z-index: 7;
+  width: 220px; height: 36px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+.holo-panel:not([data-state="idle"]) .holo-base { opacity: 1; }
+
+.base-ring {
+  position: absolute; left: 50%; top: 50%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,200,255,0.55);
+  box-shadow: 0 0 10px rgba(0,200,255,0.25);
+}
+.base-ring.r1 { width:220px; height:30px; transform:translate(-50%,-50%); animation:ringCW 4s linear infinite; }
+.base-ring.r2 { width:165px; height:22px; transform:translate(-50%,-50%); animation:ringCCW 3s linear infinite; border-color:rgba(0,180,255,0.4); }
+.base-ring.r3 { width:95px;  height:13px; transform:translate(-50%,-50%); animation:ringPulse 2s ease-in-out infinite; border-color:rgba(0,230,255,0.8); box-shadow:0 0 12px rgba(0,200,255,0.6); }
+.base-glow {
+  position: absolute; left:50%; top:50%;
+  transform: translate(-50%,-50%);
+  width:200px; height:20px;
+  background: radial-gradient(ellipse, rgba(0,180,255,0.5) 0%, transparent 70%);
+  animation: ringPulse 2s ease-in-out infinite;
+}
+@keyframes ringCW   { from{transform:translate(-50%,-50%) rotateX(72deg) rotate(0deg)}   to{transform:translate(-50%,-50%) rotateX(72deg) rotate(360deg)} }
+@keyframes ringCCW  { from{transform:translate(-50%,-50%) rotateX(72deg) rotate(0deg)}   to{transform:translate(-50%,-50%) rotateX(72deg) rotate(-360deg)} }
+@keyframes ringPulse { 0%,100%{opacity:0.6} 50%{opacity:1; filter:brightness(1.6)} }
+
+/* Recording waveform inside holo panel */
+.record-wave {
+  position: absolute;
+  bottom: 110px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 3px; align-items: flex-end;
+  height: 32px; z-index: 9;
+  opacity: 0; transition: opacity 0.3s;
+}
+.holo-panel[data-state="listening"] .record-wave { opacity: 1; }
+.rw-bar {
+  width: 4px; border-radius: 3px;
+  background: linear-gradient(to top, var(--green), #00ffaa);
+  box-shadow: 0 0 5px var(--green);
+}
+.rw-bar:nth-child(1){height:8px;  animation:rw 0.5s ease-in-out infinite alternate 0.0s;}
+.rw-bar:nth-child(2){height:16px; animation:rw 0.5s ease-in-out infinite alternate 0.1s;}
+.rw-bar:nth-child(3){height:26px; animation:rw 0.5s ease-in-out infinite alternate 0.2s;}
+.rw-bar:nth-child(4){height:20px; animation:rw 0.5s ease-in-out infinite alternate 0.15s;}
+.rw-bar:nth-child(5){height:12px; animation:rw 0.5s ease-in-out infinite alternate 0.05s;}
+.rw-bar:nth-child(6){height:22px; animation:rw 0.5s ease-in-out infinite alternate 0.25s;}
+.rw-bar:nth-child(7){height:14px; animation:rw 0.5s ease-in-out infinite alternate 0.08s;}
+@keyframes rw { from{transform:scaleY(0.2);} to{transform:scaleY(1);} }
+
+/* GURU label */
+.holo-label {
+  font-family: var(--font-holo);
+  font-size: 0.55rem;
+  letter-spacing: 5px;
+  color: rgba(0,200,255,0.35);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 20;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHAT PANEL — Right Column
+═══════════════════════════════════════════════════════ */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(0,6,16,0.92);
+}
+
+/* Welcome */
+.welcome {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100%; text-align: center; gap: 14px;
+}
+.welcome .big-icon { font-size: 52px; filter: drop-shadow(0 0 12px rgba(0,255,255,0.5)); }
+.welcome h2 {
+  font-family: var(--font-holo);
+  font-size: 1.4rem; color: var(--cyan);
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px var(--cyan-dim);
+}
+.welcome p { color: var(--text-dim); font-size: 0.88rem; max-width: 380px; line-height: 1.7; }
+.welcome .hint-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+.hint-chip {
+  background: rgba(0,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 0.75rem; cursor: pointer;
+  transition: all 0.15s; color: var(--text-dim);
+  font-family: var(--font-mono); letter-spacing: 0.5px;
+}
+.hint-chip:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 8px var(--cyan-dim); }
+
+/* ── Input Bar ── */
+.input-bar {
+  background: rgba(0,8,20,0.95);
+  border-top: 1px solid var(--border);
+  padding: 14px 28px;
+  backdrop-filter: blur(8px);
+}
+
+/* Recording bar — replaces input when mic active */
+.recording-bar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,0,40,0.08);
+  border: 1.5px solid rgba(255,50,80,0.5);
+  border-radius: 40px;
+  padding: 10px 18px;
+  margin-bottom: 8px;
+}
+.recording-bar.active { display: flex; }
+.rec-waves { display: flex; gap: 3px; align-items: center; height: 20px; }
+.rec-bar {
+  width: 3px; border-radius: 2px;
+  background: var(--red);
+  box-shadow: 0 0 4px var(--red);
+}
+.rec-bar:nth-child(1){height:8px;  animation:recw 0.4s ease-in-out infinite alternate 0.0s;}
+.rec-bar:nth-child(2){height:14px; animation:recw 0.4s ease-in-out infinite alternate 0.1s;}
+.rec-bar:nth-child(3){height:20px; animation:recw 0.4s ease-in-out infinite alternate 0.2s;}
+.rec-bar:nth-child(4){height:16px; animation:recw 0.4s ease-in-out infinite alternate 0.1s;}
+.rec-bar:nth-child(5){height:10px; animation:recw 0.4s ease-in-out infinite alternate 0.0s;}
+@keyframes recw { from{transform:scaleY(0.3);} to{transform:scaleY(1);} }
+.rec-time {
+  font-family: var(--font-holo);
+  font-size: 0.75rem; color: var(--red);
+  text-shadow: 0 0 6px var(--red);
+  letter-spacing: 2px;
+}
+.rec-label { font-size: 0.72rem; color: rgba(255,100,100,0.7); font-family: var(--font-mono); letter-spacing: 1px; }
+.rec-stop-btn {
+  margin-left: auto;
+  background: none; border: 1px solid rgba(255,50,80,0.5);
+  color: var(--red); border-radius: 20px;
+  padding: 3px 12px; font-size: 0.7rem;
+  font-family: var(--font-mono); cursor: pointer;
+  transition: all 0.15s; letter-spacing: 1px;
+}
+.rec-stop-btn:hover { background: rgba(255,0,40,0.12); }
+
+.input-wrap {
+  display: flex; align-items: flex-end; gap: 8px;
+}
+.text-input-wrap {
+  flex: 1;
+  background: rgba(0,15,30,0.8);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  display: flex; align-items: flex-end;
+  transition: border-color 0.2s;
+  padding: 2px 4px 2px 16px;
+}
+.text-input-wrap:focus-within { border-color: var(--cyan); box-shadow: 0 0 8px var(--cyan-dim); }
+textarea {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--font-body);
+  font-size: 0.88rem; resize: none;
+  padding: 10px 4px; max-height: 120px; line-height: 1.6;
+}
+textarea::placeholder { color: var(--text-dim); }
+
+/* Action buttons */
+.mic-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(0,255,255,0.06);
+  border: 1.5px solid var(--border2);
+  color: var(--cyan); font-size: 20px;
+  cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 0 8px rgba(0,255,255,0.1);
+}
+.mic-btn:hover { background: rgba(0,255,255,0.12); box-shadow: 0 0 16px var(--cyan-dim); transform: scale(1.05); }
+.mic-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+.mic-btn.recording {
+  background: rgba(255,0,40,0.15);
+  border-color: var(--red);
+  box-shadow: 0 0 16px rgba(255,0,40,0.4);
+  animation: recPulse 1s ease-in-out infinite;
+}
+@keyframes recPulse { 0%,100%{box-shadow:0 0 8px rgba(255,0,40,0.3)} 50%{box-shadow:0 0 20px rgba(255,0,40,0.6)} }
+
+.send-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--cyan), #0066cc);
+  border: none; color: #000; font-size: 18px;
+  cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 0 12px rgba(0,200,255,0.4);
+}
+.send-btn:hover { transform: scale(1.08); box-shadow: 0 0 20px rgba(0,200,255,0.6); }
+.send-btn:active { transform: scale(0.95); }
+.send-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+
+.spk-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: 20px;
+  padding: 3px 11px; font-size: 0.68rem;
+  font-family: var(--font-mono); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+  letter-spacing: 1px;
+}
+.spk-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.spk-btn.off { opacity: 0.4; }
+
+.voice-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 7px; flex-wrap: wrap;
+}
+.ask-hint {
+  font-size: 0.65rem; color: var(--text-dim);
+  font-family: var(--font-mono); letter-spacing: 0.5px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+.toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: rgba(0,8,20,0.95);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 16px;
+  font-size: 0.8rem; z-index: 999;
+  opacity: 0; transform: translateY(10px);
+  transition: all 0.25s; pointer-events: none;
+  font-family: var(--font-mono); backdrop-filter: blur(8px);
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.ok  { border-color: var(--green);  color: var(--green); }
+.toast.err { border-color: var(--red);    color: var(--red); }
+
+/* ═══════════════════════════════════════════════════════
+   SCROLLBAR GLOBAL
+═══════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+::selection { background: rgba(0,255,255,0.25); color: #fff; }
+
+/* ══════════════════════════════════════════════════════
+   VIDEO UPLOAD BUTTON — overlaid on holo panel
+══════════════════════════════════════════════════════ */
+.vid-upload-btn {
+  position: absolute;
+  bottom: 56px; right: 12px;
+  z-index: 30;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(0,8,20,0.85);
+  border: 1px solid var(--border2);
+  color: var(--cyan);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 0 8px var(--cyan-dim);
+  title: "Upload your video";
+}
+.vid-upload-btn:hover {
+  background: rgba(0,255,255,0.12);
+  box-shadow: 0 0 16px var(--cyan-dim);
+  transform: scale(1.1);
+}
+.vid-upload-input { display: none; }
+
+/* ── Full screen click hint on holo panel ── */
+.holo-click-hint {
+  position: absolute;
+  bottom: 52px; left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 2px;
+  color: rgba(0,200,255,0.28);
+  white-space: nowrap;
+  z-index: 25;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.holo-panel:hover .holo-click-hint { color: rgba(0,200,255,0.55); }
+
+/* ══════════════════════════════════════════════════════
+   FULLSCREEN OVERLAY
+══════════════════════════════════════════════════════ */
+.fs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #000;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.fs-overlay.active { display: flex; }
+
+.fs-overlay video {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 30px rgba(0,255,255,0.8))
+    drop-shadow(0 0 80px rgba(0,200,255,0.5))
+    brightness(1.15);
+}
+
+/* Ambient glow behind fullscreen video */
+.fs-overlay::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center,
+    rgba(0,80,120,0.4) 0%, rgba(0,20,40,0.9) 60%, #000 100%);
+  pointer-events: none;
+}
+
+/* Scanlines on fullscreen */
+.fs-overlay::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    rgba(0,255,255,0.03) 3px, rgba(0,255,255,0.03) 4px
+  );
+  pointer-events: none;
+}
+
+.fs-close-btn {
+  position: absolute;
+  top: 20px; right: 24px;
+  z-index: 210;
+  font-family: var(--font-holo);
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: rgba(0,200,255,0.6);
+  background: rgba(0,8,20,0.8);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fs-close-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+
+.fs-status {
+  position: absolute;
+  bottom: 40px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 210;
+  font-family: var(--font-holo);
+  font-size: 0.7rem;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  text-shadow: 0 0 10px var(--cyan);
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: titlePulse 2s ease-in-out infinite;
+}
+
+/* Rotating rings inside fullscreen */
+.fs-rings {
+  position: absolute;
+  bottom: 80px; left: 50%;
+  transform: translateX(-50%);
+  width: 320px; height: 44px;
+  z-index: 205;
+}
+.fs-ring {
+  position: absolute; left:50%; top:50%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,200,255,0.5);
+}
+.fs-ring.r1 { width:320px; height:44px; transform:translate(-50%,-50%); animation:ringCW 4s linear infinite; }
+.fs-ring.r2 { width:230px; height:32px; transform:translate(-50%,-50%); animation:ringCCW 3s linear infinite; border-color:rgba(0,180,255,0.35); }
+.fs-ring.r3 { width:130px; height:18px; transform:translate(-50%,-50%); animation:ringPulse 2s ease-in-out infinite; border-color:rgba(0,240,255,0.8); box-shadow:0 0 14px rgba(0,220,255,0.6); }
+.fs-ring-glow {
+  position: absolute; left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:280px; height:28px;
+  background: radial-gradient(ellipse, rgba(0,180,255,0.6) 0%, transparent 70%);
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+/* Sound waves in fullscreen */
+.fs-waves {
+  position: absolute;
+  bottom: 145px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 6px; align-items: flex-end;
+  height: 60px; z-index: 206;
+  opacity: 0; transition: opacity 0.3s;
+}
+.fs-overlay.speaking .fs-waves { opacity: 1; }
+.fs-wave-bar {
+  width: 6px; border-radius: 4px;
+  background: linear-gradient(to top, var(--cyan), #0066ff);
+  box-shadow: 0 0 8px var(--cyan);
+}
+.fs-wave-bar:nth-child(1){height:20px; animation:sw 0.4s ease-in-out infinite alternate 0.00s;}
+.fs-wave-bar:nth-child(2){height:36px; animation:sw 0.4s ease-in-out infinite alternate 0.08s;}
+.fs-wave-bar:nth-child(3){height:54px; animation:sw 0.4s ease-in-out infinite alternate 0.16s;}
+.fs-wave-bar:nth-child(4){height:44px; animation:sw 0.4s ease-in-out infinite alternate 0.12s;}
+.fs-wave-bar:nth-child(5){height:30px; animation:sw 0.4s ease-in-out infinite alternate 0.04s;}
+.fs-wave-bar:nth-child(6){height:44px; animation:sw 0.4s ease-in-out infinite alternate 0.10s;}
+.fs-wave-bar:nth-child(7){height:22px; animation:sw 0.4s ease-in-out infinite alternate 0.02s;}
+
+/* ══════════════════════════════════════════════════════
+   SIDE TILES CHAT LAYOUT
+══════════════════════════════════════════════════════ */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.chat-area::-webkit-scrollbar { width: 4px; }
+.chat-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Each message = a tile row */
+.message {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.message.user { flex-direction: row-reverse; }
+.message.bot  { flex-direction: row; }
+
+/* Avatar tile */
+.msg-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  border: 1px solid var(--border2);
+}
+.message.user .msg-avatar {
+  background: rgba(0,60,80,0.8);
+  box-shadow: 0 0 8px rgba(0,200,255,0.2);
+}
+.message.bot .msg-avatar {
+  background: rgba(0,20,40,0.8);
+  box-shadow: 0 0 8px rgba(0,255,200,0.15);
+  animation: none;
+}
+
+/* Tile body */
+.msg-tile {
+  flex: 1;
+  max-width: calc(100% - 90px);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Tile header (role label + time) */
+.msg-tile-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+}
+.message.user .msg-tile-header { flex-direction: row-reverse; }
+.msg-role { color: var(--cyan); text-shadow: 0 0 6px var(--cyan-dim); }
+
+/* Bubble card */
+.msg-bubble {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.87rem;
+  line-height: 1.7;
+  word-break: break-word;
+}
+.message.user .msg-bubble {
+  background: linear-gradient(135deg, rgba(0,60,90,0.88), rgba(0,30,55,0.88));
+  border: 1px solid rgba(0,255,255,0.25);
+  border-top-right-radius: 3px;
+}
+.message.bot .msg-bubble {
+  background: rgba(0,12,28,0.90);
+  border: 1px solid var(--border);
+  border-top-left-radius: 3px;
+}
+
+/* Source + lang stay as inline chips */
+.sources-tag {
+  font-size: 0.62rem; font-family: var(--font-mono);
+  color: var(--text-dim);
+  display: flex; gap: 5px; flex-wrap: wrap;
+}
+.source-chip {
+  background: rgba(0,255,255,0.06);
+  border: 1px solid rgba(0,255,255,0.2);
+  color: var(--cyan); border-radius: 4px; padding: 1px 6px;
+}
+.chart-img {
+  max-width: 100%; margin-top: 8px; border-radius: 8px;
+  border: 1px solid rgba(0,255,255,0.2);
+}
+.video-pending {
+  font-size: 0.7rem; font-family: var(--font-mono); color: var(--text-dim);
+  margin-top: 8px; font-style: italic;
+}
+.lang-badge {
+  font-size: 0.62rem; font-family: var(--font-mono);
+  border-radius: 10px; padding: 1px 7px;
+  display: none; align-items: center;
+}
+.lang-badge.show { display: inline-flex; }
+.lang-en       { background:#0f1e0f; border:1px solid #1e4020; color:#4caf80; }
+.lang-ta       { background:#1a0f0a; border:1px solid #3d1a0a; color:#e8834a; }
+.lang-tanglish { background:#0f0f1a; border:1px solid #1e1e3a; color:#5b8fff; }
+
+.typing-cursor {
+  display: inline-block; width: 2px; height: 1em;
+  background: var(--cyan); margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 0.8s step-end infinite;
+}
+@keyframes blink { 50%{opacity:0} }
+
+/* ═══════════════════════════════════════════════════════
+   ADVANCED HOLOGRAM HUD — Tony-Stark-inspired (original implementation)
+═══════════════════════════════════════════════════════ */
+.holo-control-dock {
+  position: absolute;
+  top: 58px;
+  right: 18px;
+  z-index: 22;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 320px;
+}
+.holo-tool-btn {
+  background: rgba(0, 16, 32, 0.76);
+  border: 1px solid rgba(0,255,255,.22);
+  color: var(--text-dim);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: .62rem;
+  letter-spacing: 1px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: .18s ease;
+}
+.holo-tool-btn:hover, .holo-tool-btn.active {
+  color: var(--cyan);
+  border-color: rgba(0,255,255,.65);
+  box-shadow: 0 0 10px rgba(0,255,255,.18);
+  transform: translateY(-1px);
+}
+.holo-hud-panel {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  z-index: 22;
+  min-width: 235px;
+  max-width: 320px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(0,8,20,.62);
+  border: 1px solid rgba(0,255,255,.18);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 18px rgba(0,255,255,.08);
+}
+.holo-hud-title {
+  color: var(--cyan);
+  font-size: .68rem;
+  font-family: var(--font-holo);
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.holo-hud-grid {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: .66rem;
+}
+.holo-hud-grid .k { color: var(--text-dim); }
+.holo-hud-grid .v { color: #dff; text-align:right; }
+.holo-cmd-hint {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,255,255,.1);
+  color: var(--text-dim);
+  font-size: .59rem;
+  line-height: 1.45;
+  font-family: var(--font-mono);
+}
+.holo-panel.scan-mode::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0,255,255,.12) 48%, rgba(0,255,255,.28) 50%, rgba(0,255,255,.12) 52%, transparent 100%);
+  animation: hudScanSweep 2.8s linear infinite;
+}
+@keyframes hudScanSweep {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: .7; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+.holo-figure-wrap.orbiting .holo-video {
+  animation: orbitHover 7s ease-in-out infinite;
+}
+@keyframes orbitHover {
+  0%,100% { transform: translate3d(0,0,0) scale(1) rotateY(0deg); }
+  25% { transform: translate3d(8px,-4px,0) scale(1.01) rotateY(5deg); }
+  50% { transform: translate3d(0,-8px,0) scale(1.02) rotateY(0deg); }
+  75% { transform: translate3d(-8px,-4px,0) scale(1.01) rotateY(-5deg); }
+}
+.holo-figure-wrap.xray .holo-video {
+  filter: saturate(0) brightness(1.18) contrast(1.08) sepia(.45) hue-rotate(120deg);
+  opacity: .88;
+}
+.holo-figure-wrap.focus-lock {
+  box-shadow: 0 0 0 1px rgba(0,255,255,.35), 0 0 24px rgba(0,255,255,.18);
+  border-radius: 30px;
+}
+.holo-panel[data-panels="false"] .holo-hud-panel { display: none; }
+.holo-panel[data-panels="false"] .holo-control-dock { opacity: .9; }
+.holo-microtag {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 22;
+  border: 1px solid rgba(0,255,255,.2);
+  color: var(--text-dim);
+  font-size: .57rem;
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: rgba(0,8,20,.55);
+}
+
+
+/* Offline 3D hologram viewport */
+.holo-3d-stage {
+  position:absolute;
+  inset: 92px 28px 80px 28px;
+  z-index:8;
+  pointer-events:none;
+  opacity:.92;
+  transition:.25s ease;
+}
+.holo-3d-stage canvas { width:100%; height:100%; display:block; }
+.holo-panel[data-model3d="false"] .holo-3d-stage { opacity:0; }
+.holo-data-card {
+  position:absolute;
+  z-index:21;
+  min-width:128px;
+  padding:8px 10px;
+  border:1px solid rgba(0,255,255,.18);
+  border-radius:10px;
+  background:rgba(0,10,22,.58);
+  backdrop-filter:blur(9px);
+  font-family:var(--font-mono);
+  font-size:.57rem;
+  color:var(--text-dim);
+  letter-spacing:.6px;
+  pointer-events:none;
+  box-shadow:0 0 14px rgba(0,255,255,.06);
+}
+.holo-data-card b { color:var(--cyan); font-size:.65rem; }
+.holo-data-a { top:138px; left:18px; }
+.holo-data-b { top:138px; right:18px; text-align:right; }
+.holo-data-c { top:238px; right:18px; text-align:right; }
+.holo-panel[data-panels="false"] .holo-data-card { display:none; }
+
+
+.holo-asset-strip {
+  position:absolute; left:50%; transform:translateX(-50%); top:18px; z-index:23;
+  display:flex; gap:6px; padding:6px; border-radius:999px;
+  background:rgba(0,8,20,.62); border:1px solid rgba(0,255,255,.18); backdrop-filter:blur(10px);
+}
+.holo-asset-btn {
+  border:1px solid rgba(0,255,255,.16); background:rgba(0,20,35,.55); color:var(--text-dim);
+  border-radius:999px; padding:5px 9px; font:600 .58rem var(--font-mono); letter-spacing:.8px; cursor:pointer;
+}
+.holo-asset-btn.active,.holo-asset-btn:hover{color:var(--cyan);border-color:rgba(0,255,255,.6);box-shadow:0 0 9px rgba(0,255,255,.18)}
+.holo-part-chip {
+  display:inline-block; margin-top:6px; padding:3px 7px; border-radius:999px;
+  border:1px solid rgba(0,255,255,.18); color:var(--cyan); font:600 .56rem var(--font-mono);
+}
+
+
+.holo-side-card {
+  position:absolute; left:18px; top:92px; z-index:22; width:240px;
+  padding:10px 12px; border-radius:14px; background:rgba(0,8,20,.58);
+  border:1px solid rgba(0,255,255,.14); backdrop-filter:blur(10px);
+}
+.holo-side-card h4 { margin:0 0 8px; color:var(--cyan); font-size:.62rem; letter-spacing:2px; font-family:var(--font-mono); }
+.holo-side-card .tiny { color:var(--text-dim); font-size:.6rem; font-family:var(--font-mono); line-height:1.45; }
+.holo-quiz-status { color:#dff; font-size:.68rem; font-family:var(--font-mono); margin-bottom:6px; }
+.holo-log { max-height:88px; overflow:auto; margin-top:8px; padding-right:2px; }
+.holo-log-item { color:var(--text-dim); font-size:.57rem; font-family:var(--font-mono); padding:2px 0; border-bottom:1px dashed rgba(0,255,255,.08); }
+.holo-log-item:last-child { border-bottom:none; }
+.holo-panel[data-panels="false"] .holo-side-card { display:none; }
+
+
+.holo-overlay-canvas {
+  position:absolute; inset:0; width:100%; height:100%; z-index:15; pointer-events:none;
+}
+.holo-panel.annotate-pointer .holo-overlay-canvas,
+.holo-panel.annotate-draw .holo-overlay-canvas { pointer-events:auto; cursor: crosshair; }
+.holo-room-card {
+  position:absolute; right:18px; top:140px; z-index:22; width:250px;
+  padding:12px; border-radius:14px; background:rgba(0,8,20,.58); backdrop-filter: blur(10px);
+  border:1px solid rgba(0,255,255,.14);
+}
+.holo-room-title { margin:0 0 8px; color:var(--cyan); font-size:.62rem; letter-spacing:2px; font-family:var(--font-mono); }
+.holo-room-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.holo-room-chip { padding:4px 8px; border-radius:999px; font-size:.56rem; letter-spacing:1px; font-family:var(--font-mono); color:var(--text-dim); border:1px solid rgba(0,255,255,.14); }
+.holo-room-list { max-height:84px; overflow:auto; font-family:var(--font-mono); font-size:.58rem; color:#dff; }
+.holo-room-list div { padding:2px 0; border-bottom:1px dashed rgba(0,255,255,.06); }
+.holo-room-list div:last-child { border-bottom:none; }
+.holo-panel[data-panels="false"] .holo-room-card { display:none; }
+.holo-import-badge { color:var(--text-dim); font-size:.58rem; font-family:var(--font-mono); margin-top:6px; }
+
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-grid"></div>
+<div class="bg-particles" id="bgParticles"></div>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div>
+    <div class="holo-title">HOLO GURU</div>
+    <div class="holo-subtitle">AI BOOK TEACHER · RAG SYSTEM</div>
+  </div>
+  <button class="new-chat-btn" onclick="newChat()">＋ NEW CHAT</button>
+  <div class="server-status">
+    <div class="server-dot" id="serverDot"></div>
+    <span id="statusText">LOADING</span>
+  </div>
+</header>
+
+<!-- ══ FULLSCREEN OVERLAY ══ -->
+<div class="fs-overlay" id="fsOverlay" onclick="closeFullscreen()">
+  <button class="fs-close-btn" onclick="event.stopPropagation(); closeFullscreen()">✕ CLOSE</button>
+  <video id="fsVideo" muted playsinline loop="false"
+    style="position:relative;z-index:202;"></video>
+  <div class="fs-rings">
+    <div class="fs-ring r1"></div>
+    <div class="fs-ring r2"></div>
+    <div class="fs-ring r3"></div>
+    <div class="fs-ring-glow"></div>
+  </div>
+  <div class="fs-waves">
+    <div class="fs-wave-bar"></div><div class="fs-wave-bar"></div><div class="fs-wave-bar"></div>
+    <div class="fs-wave-bar"></div><div class="fs-wave-bar"></div>
+    <div class="fs-wave-bar"></div><div class="fs-wave-bar"></div>
+  </div>
+  <div class="fs-status" id="fsStatusText">ONLINE</div>
+</div>
+
+<div class="layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>📖 Book Library</h2>
+      <div class="book-count" id="bookCount">0 books loaded</div>
+    </div>
+    <label class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".pdf,.epub,.docx,.txt" multiple hidden>
+      <div class="upload-icon">⬆️</div>
+      <p>Drop books here or <strong>click to upload</strong><br>PDF · EPUB · DOCX · TXT</p>
+    </label>
+    <div class="upload-progress" id="uploadProgress">
+      <div class="bar" id="progressBar"></div>
+    </div>
+    <div class="filter-info" id="filterInfo" style="display:none">
+      Filtering: <span id="filterCount">0</span> book(s) selected
+    </div>
+    <div class="books-list" id="booksList"></div>
+  </div>
+
+  <!-- ══ HOLOGRAM PANEL ══ -->
+  <div class="holo-panel" id="holoPanel" data-state="idle">
+
+    <!-- Status badge -->
+    <div class="holo-status">
+      <div class="holo-status-dot"></div>
+      <span id="holoStatusText">STANDBY</span>
+    </div>
+    <div class="holo-gesture-badge" id="holoGestureBadge">GESTURE · READY</div>
+    <div class="holo-asset-strip" id="holoAssetStrip">
+      <button class="holo-asset-btn active" data-asset="heart" onclick="setHologramAsset('heart')">HEART</button>
+      <button class="holo-asset-btn" data-asset="engine" onclick="setHologramAsset('engine')">ENGINE</button>
+      <button class="holo-asset-btn" data-asset="molecule" onclick="setHologramAsset('molecule')">MOLECULE</button>
+      <button class="holo-asset-btn" data-asset="anatomy" onclick="setHologramAsset('anatomy')">ANATOMY</button>
+      <button class="holo-asset-btn" data-asset="brain" onclick="setHologramAsset('brain')">BRAIN</button>
+      <button class="holo-asset-btn" data-asset="cell" onclick="setHologramAsset('cell')">CELL</button>
+      <button class="holo-asset-btn" data-asset="solar" onclick="setHologramAsset('solar')">SOLAR</button>
+      <button class="holo-asset-btn" data-asset="imported" onclick="setHologramAsset('imported')">IMPORTED</button>
+    </div>
+    <div class="holo-control-dock" id="holoControlDock">
+      <button class="holo-tool-btn active" data-tool="3d" onclick="toggle3DModel()">3D CORE</button>
+      <button class="holo-tool-btn" data-tool="orbit" onclick="hologramAction('toggle_orbit')">ORBIT</button>
+      <button class="holo-tool-btn" data-tool="scan" onclick="hologramAction('toggle_scan')">SCAN</button>
+      <button class="holo-tool-btn" data-tool="xray" onclick="hologramAction('toggle_xray')">X-RAY</button>
+      <button class="holo-tool-btn" data-tool="slice" onclick="hologramAction('toggle_section')">SLICE</button>
+      <button class="holo-tool-btn" data-tool="freeze" onclick="hologramAction('toggle_freeze')">FREEZE</button>
+      <button class="holo-tool-btn" data-tool="labels" onclick="hologramAction('toggle_labels')">LABELS</button>
+      <button class="holo-tool-btn" data-tool="wire" onclick="hologramAction('toggle_wire_density')">WIRE+</button>
+      <button class="holo-tool-btn" data-tool="measure" onclick="hologramAction('toggle_measure')">MEASURE</button>
+      <button class="holo-tool-btn" data-tool="explode-anim" onclick="hologramAction('start_explode_anim', 100)">ANIM+</button>
+      <button class="holo-tool-btn" data-tool="clip" onclick="hologramAction('toggle_clip')">CLIP</button>
+      <button class="holo-tool-btn" data-tool="explode+" onclick="hologramAction('explode_more')">EXPLODE +</button>
+      <button class="holo-tool-btn" data-tool="explode-" onclick="hologramAction('explode_less')">EXPLODE −</button>
+      <button class="holo-tool-btn" data-tool="next-layer" onclick="hologramAction('next_layer')">NEXT LAYER</button>
+      <button class="holo-tool-btn" data-tool="focus" onclick="quickFocus()">FOCUS</button>
+      <button class="holo-tool-btn" data-tool="panels" onclick="hologramAction('toggle_panels')">PANELS</button>
+      <button class="holo-tool-btn" data-tool="compare" onclick="hologramAction('toggle_compare')">COMPARE</button>
+      <button class="holo-tool-btn" data-tool="quiz" onclick="toggleHoloQuiz()">QUIZ</button>
+      <button class="holo-tool-btn" data-tool="tour" onclick="toggleHoloTour()">TOUR</button>
+      <button class="holo-tool-btn" data-tool="save" onclick="saveHoloBookmark()">SAVE</button>
+      <button class="holo-tool-btn" data-tool="load" onclick="loadHoloBookmark()">LOAD</button>
+      <button class="holo-tool-btn" data-tool="import" onclick="openModelImport()">IMPORT 3D</button>
+      <button class="holo-tool-btn" data-tool="pointer" onclick="setAnnotationMode('pointer')">POINTER</button>
+      <button class="holo-tool-btn" data-tool="draw" onclick="setAnnotationMode('draw')">DRAW</button>
+      <button class="holo-tool-btn" data-tool="clearanno" onclick="clearAnnotations()">CLEAR ANNO</button>
+      <button class="holo-tool-btn" data-tool="room" onclick="toggleRoomJoin()">ROOM</button>
+      <button class="holo-tool-btn" data-tool="reset" onclick="hologramAction('reset_scene')">RESET</button>
+    </div>
+    <div class="holo-side-card" id="holoSideCard">
+      <h4>QUIZ / SESSION</h4>
+      <div class="holo-quiz-status" id="quizStatus">QUIZ · OFF</div>
+      <div class="tiny" id="quizPrompt">Start quiz to test hotspot identification.</div>
+      <div class="tiny" id="bookmarkStatus" style="margin-top:8px;">BOOKMARK · NONE</div>
+      <div class="tiny" style="margin-top:8px; letter-spacing:1px; color:var(--cyan);">EVENT LOG</div>
+      <div class="holo-log" id="holoEventLog"></div>
+    </div>
+    <div class="holo-hud-panel" id="holoHudPanel">
+      <div class="holo-hud-title">ADVANCED HOLOGRAM HUD</div>
+      <div class="holo-hud-grid">
+        <div class="k">ASSET</div><div class="v" id="hudAsset">HEART</div>
+        <div class="k">MODE</div><div class="v" id="hudMode">TUTOR</div>
+        <div class="k">FOCUS</div><div class="v" id="hudFocus">AUTO</div>
+        <div class="k">EXPLODE</div><div class="v" id="hudExplode">0%</div>
+        <div class="k">LAYER</div><div class="v" id="hudLayer">SURFACE</div>
+        <div class="k">SCAN</div><div class="v" id="hudScan">OFF</div>
+        <div class="k">X-RAY</div><div class="v" id="hudXray">OFF</div>
+        <div class="k">SLICE</div><div class="v" id="hudSlice">OFF</div>
+        <div class="k">FREEZE</div><div class="v" id="hudFreeze">OFF</div>
+        <div class="k">LABELS</div><div class="v" id="hudLabels">ON</div>
+        <div class="k">SPEED</div><div class="v" id="hudSpeed">1.0×</div>
+        <div class="k">MEASURE</div><div class="v" id="hudMeasure">OFF</div>
+        <div class="k">CLIP</div><div class="v" id="hudClip">OFF</div>
+        <div class="k">ANIM</div><div class="v" id="hudAnim">OFF</div>
+      </div>
+      <div class="holo-part-chip" id="hudSelectedPart">SELECTED · NONE</div>
+      <div class="holo-cmd-hint" id="holoCommandHint">Type commands like <strong>/holo explode 80</strong>, <strong>/holo orbit</strong>, <strong>/holo focus on engine</strong>.</div>
+    </div>
+    
+    <div class="holo-room-card" id="holoRoomCard">
+      <div class="holo-room-title">MULTI-USER ROOM</div>
+      <div class="holo-room-row">
+        <div class="holo-room-chip" id="roomStatus">OFFLINE</div>
+        <div class="holo-room-chip" id="roomMeta">ROOM · —</div>
+      </div>
+      <div class="tiny" id="roomUserLabel">USER · SOLO</div>
+      <div class="tiny" style="margin-top:6px; letter-spacing:1px; color:var(--cyan);">PARTICIPANTS</div>
+      <div class="holo-room-list" id="roomParticipants">No room joined.</div>
+      <div class="holo-import-badge" id="importBadge">MODEL IMPORT · NONE</div>
+    </div>
+
+    <div class="holo-microtag" id="holoMicroTag">SCENE · TUTOR</div>
+
+    <!-- Video upload button -->
+    <button class="vid-upload-btn" id="vidUploadBtn" title="Upload your hologram video" onclick="document.getElementById('vidFileInput').click()">📹</button>
+    <input type="file" id="vidFileInput" class="vid-upload-input" accept="video/*">
+    <input type="file" id="modelInput" class="vid-upload-input" accept=".obj,.glb">
+
+    <!-- Click to fullscreen hint -->
+    <div class="holo-click-hint" onclick="openFullscreen()">▶ CLICK TO FULLSCREEN</div>
+
+    <!-- Floating particles (added by JS) -->
+
+    <div class="holo-3d-stage" id="holo3dStage"><canvas id="holo3dCanvas"></canvas><canvas id="holoOverlayCanvas" class="holo-overlay-canvas"></canvas></div>
+    <div class="holo-data-card holo-data-a"><b id="cardObject">HEART MODEL</b><br><span id="cardFocus">FOCUS: AUTO</span><br><span id="cardLayer">LAYER: SURFACE</span></div>
+    <div class="holo-data-card holo-data-b"><b>SPATIAL</b><br><span id="cardExplode">EXPLODE: 0%</span><br><span id="cardOrbit">ORBIT: OFF</span></div>
+    <div class="holo-data-card holo-data-c"><b>ANALYSIS</b><br><span id="cardScan">SCAN: OFF</span><br><span id="cardXray">X-RAY: OFF</span></div>
+
+    <!-- Figure -->
+    <div class="holo-figure-wrap">
+      <video id="holoVideo" class="holo-video"
+        muted playsinline loop="false" preload="none"
+        aria-label="Optional uploaded hologram video">
+      </video>
+      <div class="holo-scan"></div>
+      <div class="holo-glow"></div>
+      <!-- Sound waves (speaking) -->
+      <div class="sound-waves">
+        <div class="sw-bar"></div><div class="sw-bar"></div><div class="sw-bar"></div>
+        <div class="sw-bar"></div><div class="sw-bar"></div>
+      </div>
+      <!-- Record waves (listening) -->
+      <div class="record-wave">
+        <div class="rw-bar"></div><div class="rw-bar"></div><div class="rw-bar"></div>
+        <div class="rw-bar"></div><div class="rw-bar"></div>
+      </div>
+    </div>
+
+    <!-- Rotating base rings -->
+    <div class="holo-base">
+      <div class="base-ring r1"></div>
+      <div class="base-ring r2"></div>
+      <div class="base-ring r3"></div>
+      <div class="base-glow"></div>
+    </div>
+
+    <div class="holo-label">GURU · AI · v2</div>
+  </div>
+
+  <!-- ══ CHAT PANEL ══ -->
+  <div class="main">
+    <div class="chat-area" id="chatArea">
+      <div class="welcome" id="welcome">
+        <div class="big-icon">🎓</div>
+        <h2>ASK FROM YOUR BOOKS</h2>
+        <p>Upload books from the sidebar. Ask any question — answers come only from your uploaded books.</p>
+        <div class="hint-chips">
+          <div class="hint-chip" onclick="fillQ('Summarise Chapter 1')">Summarise Chapter 1</div>
+          <div class="hint-chip" onclick="fillQ('What is the main topic?')">Main topic?</div>
+          <div class="hint-chip" onclick="fillQ('Explain the key concepts')">Key concepts</div>
+          <div class="hint-chip" onclick="fillQ('Give me 5 important points')">5 key points</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <!-- Recording bar (shown when mic active) -->
+      <div class="recording-bar" id="recordingBar">
+        <div class="rec-waves">
+          <div class="rec-bar"></div><div class="rec-bar"></div><div class="rec-bar"></div>
+          <div class="rec-bar"></div><div class="rec-bar"></div>
+        </div>
+        <span class="rec-time" id="recTime">0:00</span>
+        <span class="rec-label">RECORDING</span>
+        <button class="rec-stop-btn" onclick="toggleMic()">⏹ STOP</button>
+      </div>
+
+      <!-- Text input row -->
+      <div class="input-wrap">
+        <div class="text-input-wrap">
+          <textarea id="questionInput" rows="1"
+            placeholder="Ask anything from your books… or tap 🎤"
+            onkeydown="handleKey(event)"></textarea>
+        </div>
+        <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Speak">🎤</button>
+        <button class="send-btn" id="sendBtn" onclick="askQuestion()" title="Send">➤</button>
+      </div>
+
+      <!-- Voice row -->
+      <div class="voice-row">
+        <div class="ask-hint" id="askHint">↵ to send · 🎤 mic · answers from books only</div>
+        <span class="lang-badge" id="langBadge"></span>
+        <button class="spk-btn" id="spkBtn" onclick="toggleSpeaker()">🔊 VOICE ON</button>
+        <button class="spk-btn" id="camBtn" onclick="toggleCamera()" title="Emotion + gesture sensing">📷 SENSE OFF</button>
+        <button class="spk-btn" id="visualAskBtn" onclick="askAboutImage()" title="Show the camera a diagram or textbook page and ask about it">🖼️ ASK ABOUT IMAGE</button>
+        <button class="spk-btn" id="genderBtn" onclick="toggleGender()" title="Voice gender">👩 FEMALE VOICE</button>
+        <button class="spk-btn" id="wakeBtn" onclick="toggleWakeWord()" title="Wake word: Hey san">🟢 HEY SAN OFF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<audio id="ttsAudio" style="display:none"></audio>
+<video id="camFeed" autoplay playsinline muted style="display:none"></video>
+<canvas id="camCanvas" style="display:none"></canvas>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let books        = [];
+let selectedBookIds = new Set();
+let isStreaming  = false;
+let voiceEnabled = true;
+let wakeRecognition = null;
+let wakeWordEnabled = false;
+const WAKE_WORD = 'hey san';
+let camEnabled = false;
+let camStream = null;
+let camPollTimer = null;
+let latestEmotionBucket = 'neutral';
+let latestGesture = 'none';
+let gesturePollTick = 0;
+let holoInteraction = { x: 0, y: 0, scale: 1, rotateY: 0 };
+let holoScene = null;
+let holo3dEnabled = true;
+let holo3dRuntime = { yaw:0, pitch:0.18, t:0, projectedParts:[] };
+let holoImportedModel = null;
+let holoQuiz = { active:false, score:0, total:0, target:null, answered:false };
+let holoTour = { active:false, timer:null, index:0 };
+let holoBookmarks = [];
+let holoEventEntries = [];
+let holoAnnotation = { mode:'none', strokes:[], remoteStrokes:[], pointer:null, remotePointer:null, drawing:false, currentStroke:null };
+let roomState = { connected:false, roomId:'', userId:'', name:'', timer:null, lastSceneTs:0, lastAnnoTs:0, applyingRemote:false };
+let lastPointerSyncAt = 0;
+const HOLO_ASSETS = {
+  heart: {label:'HEART', parts:[
+    {name:'right atrium',p:[-.45,-.28,.15],r:.32},{name:'left atrium',p:[.45,-.28,.12],r:.32},
+    {name:'right ventricle',p:[-.34,.28,.1],r:.42},{name:'left ventricle',p:[.38,.30,.12],r:.46},
+    {name:'aorta',p:[.05,-.88,.02],r:.20},{name:'septum',p:[.02,.14,.08],r:.18}]},
+  engine: {label:'ENGINE', parts:[
+    {name:'cylinder 1',p:[-.62,-.36,0],r:.24},{name:'cylinder 2',p:[0,-.36,0],r:.24},{name:'cylinder 3',p:[.62,-.36,0],r:.24},
+    {name:'piston',p:[0,.02,.06],r:.28},{name:'crankshaft',p:[0,.62,.02],r:.34},{name:'valve train',p:[0,-.78,.02],r:.28}]},
+  molecule: {label:'MOLECULE', parts:[
+    {name:'central atom',p:[0,0,0],r:.30},{name:'atom A',p:[-.78,-.45,.12],r:.24},{name:'atom B',p:[.82,-.38,-.08],r:.24},
+    {name:'atom C',p:[-.62,.62,-.12],r:.24},{name:'atom D',p:[.68,.58,.12],r:.24}]},
+  anatomy: {label:'ANATOMY', parts:[
+    {name:'head',p:[0,-.82,0],r:.30},{name:'chest',p:[0,-.28,0],r:.40},{name:'abdomen',p:[0,.28,0],r:.36},
+    {name:'left arm',p:[-.72,-.05,0],r:.24},{name:'right arm',p:[.72,-.05,0],r:.24},{name:'pelvis',p:[0,.72,0],r:.32}]},
+  brain: {label:'BRAIN', parts:[
+    {name:'frontal lobe',p:[-.44,-.22,.08],r:.30},{name:'parietal lobe',p:[.22,-.18,.08],r:.26},{name:'temporal lobe',p:[-.46,.24,.02],r:.28},
+    {name:'occipital lobe',p:[.56,.04,-.02],r:.24},{name:'cerebellum',p:[.22,.58,.04],r:.20},{name:'brain stem',p:[0,.82,.0],r:.18}]},
+  cell: {label:'CELL', parts:[
+    {name:'nucleus',p:[0,0,0],r:.34},{name:'membrane',p:[0,-.88,.02],r:.20},{name:'mitochondrion',p:[-.56,.12,.02],r:.22},
+    {name:'golgi apparatus',p:[.56,.18,.02],r:.22},{name:'ribosome cluster',p:[-.18,.64,.02],r:.18},{name:'endoplasmic reticulum',p:[.06,-.48,.02],r:.24}]},
+  solar: {label:'SOLAR', parts:[
+    {name:'sun',p:[0,0,0],r:.40},{name:'mercury',p:[-.88,-.22,.05],r:.12},{name:'venus',p:[-.54,.56,.02],r:.14},
+    {name:'earth',p:[.0,.92,.02],r:.15},{name:'mars',p:[.66,.56,.02],r:.13},{name:'jupiter',p:[1.02,-.12,.02],r:.24}]},
+};
+let lastSelectAt = 0;
+let preferredLang = null;               // set once STT detects a non-English language
+let studentGender = localStorage.getItem('holoGender') || 'female';
+let currentLang  = 'en';
+let SESSION_ID   = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+
+// Mic state
+let mediaRecorder = null;
+let audioChunks   = [];
+let micStream     = null;
+let recTimer      = null;
+let recSeconds    = 0;
+
+// Hologram state machine
+// states: idle | standby | listening | thinking | speaking
+const HOLO_STATUS = {
+  idle:      'STANDBY',
+  standby:   'ONLINE',
+  listening: 'LISTENING',
+  thinking:  'THINKING',
+  speaking:  'SPEAKING',
+};
+
+function setHoloState(state) {
+  const panel = document.getElementById('holoPanel');
+  const label = document.getElementById('holoStatusText');
+  const video = document.getElementById('holoVideo');
+  if (!panel) return;
+  panel.dataset.state = state;
+  label.textContent = HOLO_STATUS[state] || state.toUpperCase();
+
+  if (state === 'idle') {
+    video.pause();
+  } else if (state === 'speaking') {
+    video.currentTime = 0;
+    video.play().catch(() => {});
+  } else {
+    video.pause();
+  }
+
+  // Sync fullscreen if open
+  const overlay = document.getElementById('fsOverlay');
+  if (overlay && overlay.classList.contains('active')) {
+    syncFullscreenState(state);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  BACKGROUND PARTICLES
+// ═══════════════════════════════════════════════════════
+(function spawnParticles() {
+  const container = document.getElementById('bgParticles');
+  for (let i = 0; i < 50; i++) {
+    const pt = document.createElement('div');
+    pt.className = 'pt';
+    const size  = Math.random() > 0.7 ? 3 : 2;
+    const dur   = 12 + Math.random() * 12;
+    const delay = Math.random() * dur;
+    pt.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      animation: ptFloat ${dur}s ${delay}s infinite linear;
+    `;
+    container.appendChild(pt);
+  }
+  // inject keyframes
+  const s = document.createElement('style');
+  s.textContent = `
+    @keyframes ptFloat {
+      0%   { transform:translateY(100vh) translateX(0); opacity:0; }
+      10%  { opacity:0.6; }
+      90%  { opacity:0.4; }
+      100% { transform:translateY(-60px) translateX(${Math.random()>0.5?'':'-'}${20+Math.random()*40}px); opacity:0; }
+    }
+  `;
+  document.head.appendChild(s);
+})();
+
+// Holo panel floating particles
+(function spawnHoloPts() {
+  const panel = document.getElementById('holoPanel');
+  const positions = [
+    [18,15],[72,22],[35,10],[80,35],[12,42],
+    [60,8], [45,78],[85,58],[25,65],[55,50],
+  ];
+  positions.forEach(([l,b], i) => {
+    const pt = document.createElement('div');
+    pt.className = 'holo-pt';
+    const dur = 2.5 + Math.random()*2;
+    pt.style.cssText = `left:${l}%;bottom:${b}%;animation:holoPt ${dur}s ${i*0.3}s ease-in-out infinite;`;
+    panel.appendChild(pt);
+  });
+  const s = document.createElement('style');
+  s.textContent = `
+    @keyframes holoPt {
+      0%   { transform:translateY(0) scale(1); opacity:0; }
+      15%  { opacity:0.9; }
+      85%  { opacity:0.5; }
+      100% { transform:translateY(-50px) scale(0); opacity:0; }
+    }
+    [data-state="speaking"] .holo-pt { animation-duration:0.9s !important; }
+  `;
+  document.head.appendChild(s);
+})();
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+async function init() {
+  await loadBooks();
+  await checkHealth();
+  initMic();
+  hookTTSToHologram();
+  initGenderProfile();
+  roomState.userId = (SESSION_ID || 'user').slice(0, 8);
+  roomState.name = localStorage.getItem('holoUserName') || 'Student';
+  await refreshHologramState();
+  loadSavedBookmarksMeta();
+  initHolo3D();
+  initHoloOverlay();
+  initModelUpload();
+  updateRoomHud();
+  logHoloEvent('System online');
+  setTimeout(() => setHoloState('standby'), 600);
+}
+
+async function checkHealth() {
+  try {
+    const r = await fetch('/api/health');
+    const d = await r.json();
+    document.getElementById('statusText').textContent =
+      `${d.books_loaded} BOOK${d.books_loaded !== 1 ? 'S' : ''} ONLINE`;
+  } catch {
+    document.getElementById('statusText').textContent = 'SERVER ERROR';
+    document.getElementById('serverDot').style.background = '#ff3355';
+    document.getElementById('serverDot').style.boxShadow = '0 0 6px #ff3355';
+  }
+}
+
+// Bind hologram state to TTS audio
+function hookTTSToHologram() {
+  const audio = document.getElementById('ttsAudio');
+  audio.addEventListener('play',   () => setHoloState('speaking'));
+  audio.addEventListener('ended',  () => setHoloState('standby'));
+  audio.addEventListener('pause',  () => setHoloState('standby'));
+  audio.addEventListener('error',  () => setHoloState('standby'));
+}
+
+// ═══════════════════════════════════════════════════════
+//  BOOKS
+// ═══════════════════════════════════════════════════════
+async function loadBooks() {
+  const r = await fetch('/api/books');
+  books = await r.json();
+  renderBooks();
+  document.getElementById('bookCount').textContent =
+    `${books.length} BOOK${books.length !== 1 ? 'S' : ''} LOADED`;
+}
+
+function renderBooks() {
+  const el = document.getElementById('booksList');
+  if (!books.length) {
+    el.innerHTML = '<p style="text-align:center;color:var(--text-dim);font-size:0.72rem;padding:20px 10px;font-family:var(--font-mono);letter-spacing:1px;">NO BOOKS YET.<br>UPLOAD TO START.</p>';
+    return;
+  }
+  el.innerHTML = books.map(b => `
+    <div class="book-item ${selectedBookIds.has(b.book_id) ? 'selected' : ''}"
+         onclick="toggleBook('${b.book_id}')" id="book_${b.book_id}">
+      <span class="book-icon">📗</span>
+      <div class="book-info">
+        <div class="book-title">${b.title}</div>
+        <div class="book-id">#${b.book_id}</div>
+      </div>
+      <button class="del-btn" onclick="event.stopPropagation();deleteBook('${b.book_id}')" title="Remove">✕</button>
+    </div>
+  `).join('');
+}
+
+function toggleBook(id) {
+  if (selectedBookIds.has(id)) selectedBookIds.delete(id);
+  else selectedBookIds.add(id);
+  renderBooks();
+  const fi = document.getElementById('filterInfo');
+  if (selectedBookIds.size > 0) {
+    fi.style.display = 'block';
+    document.getElementById('filterCount').textContent = selectedBookIds.size;
+  } else {
+    fi.style.display = 'none';
+  }
+  document.getElementById('askHint').textContent = selectedBookIds.size > 0
+    ? `Asking from ${selectedBookIds.size} book(s)`
+    : '↵ to send · 🎤 mic · answers from books only';
+}
+
+async function deleteBook(id) {
+  if (!confirm('Remove this book?')) return;
+  await fetch(`/api/books/${id}`, { method: 'DELETE' });
+  selectedBookIds.delete(id);
+  await loadBooks(); await checkHealth();
+  showToast('Book removed', 'ok');
+}
+
+// ═══════════════════════════════════════════════════════
+//  UPLOAD
+// ═══════════════════════════════════════════════════════
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag');
+  uploadFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => uploadFiles(fileInput.files));
+
+async function uploadFiles(files) {
+  const prog = document.getElementById('uploadProgress');
+  const bar  = document.getElementById('progressBar');
+  prog.style.display = 'block';
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    bar.style.width = `${(i / files.length) * 100}%`;
+    showToast(`Uploading "${f.name}"…`, 'ok');
+    const fd = new FormData(); fd.append('file', f);
+    try {
+      const r = await fetch('/api/upload', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (d.error) showToast(`❌ ${d.error}`, 'err');
+      else showToast(`✅ "${d.title}" — ${d.chunks} chunks`, 'ok');
+    } catch { showToast('❌ Upload failed', 'err'); }
+    bar.style.width = `${((i+1) / files.length) * 100}%`;
+  }
+  setTimeout(() => { prog.style.display = 'none'; bar.style.width = '0%'; }, 1000);
+  await loadBooks(); await checkHealth(); fileInput.value = '';
+}
+
+// ═══════════════════════════════════════════════════════
+//  CHAT
+// ═══════════════════════════════════════════════════════
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askQuestion(); }
+  const ta = document.getElementById('questionInput');
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+function fillQ(text) {
+  document.getElementById('questionInput').value = text;
+  document.getElementById('questionInput').focus();
+}
+
+async function askQuestion() {
+  if (isStreaming) return;
+  const input = document.getElementById('questionInput');
+  const q = input.value.trim();
+  if (!q) return;
+  if (q.toLowerCase().startsWith('/holo ')) {
+    input.value = ''; input.style.height = 'auto';
+    await runHologramCommand(q.slice(6).trim());
+    return;
+  }
+  if (books.length === 0) { showToast('Upload at least one book first', 'err'); return; }
+
+  input.value = ''; input.style.height = 'auto';
+  const w = document.getElementById('welcome');
+  if (w) w.style.display = 'none';
+
+  if (typeof stopAllTTS === 'function') stopAllTTS();
+  else {
+    const audio = document.getElementById('ttsAudio');
+    if (audio) { try { audio.pause(); audio.src = ''; } catch(_){} }
+  }
+
+  appendMessage('user', q);
+  const botMsg = appendMessage('bot', '');
+  const bubble = botMsg.querySelector('.msg-bubble');
+  const srcTag = botMsg.querySelector('.sources-tag');
+  const lb     = botMsg.querySelector('.lang-badge');
+
+  isStreaming = true;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('micBtn').disabled  = true;
+  document.getElementById('askHint').textContent = '⏳ SCANNING BOOKS…';
+  setHoloState('thinking');
+
+  const payload = {
+    question: q, session_id: SESSION_ID,
+    emotion_bucket: latestEmotionBucket,
+    gesture: latestGesture,
+    preferred_lang: preferredLang,
+    hologram_context: { asset: holoScene?.asset || 'heart', selected_part: holoScene?.selected_part || holoScene?.focus || null, layer: holoScene?.active_layer || 'surface' },
+  };
+  if (selectedBookIds.size > 0) payload.book_ids = [...selectedBookIds];
+
+  let fullText = '', detectedLang = 'en', chartDataUrl = null, imageDataUrl = null, videoJobId = null;
+  let sentencesQueued = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+
+  try {
+    const resp = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    // Reset one-shot gesture after it's been sent, so it isn't reused next turn
+    latestGesture = 'none';
+
+    // Non-streaming short-circuit: palm_stop gesture paused the request server-side
+    const ctype = resp.headers.get('content-type') || '';
+    if (ctype.includes('application/json')) {
+      const j = await resp.json();
+      if (j.paused) {
+        bubble.textContent = '✋ Paused — palm detected. Ask again when ready.';
+        isStreaming = false;
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('micBtn').disabled  = false;
+        document.getElementById('askHint').textContent = '↵ to send · 🎤 mic · answers from books only';
+        setHoloState('standby');
+        return;
+      }
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    bubble.innerHTML = ''; bubble.appendChild(cursor);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n'); buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') break;
+        try {
+          const obj = JSON.parse(raw);
+          if (obj.lang) {
+            detectedLang = obj.lang; currentLang = obj.lang;
+            if (lb) { showLangBadgeEl(lb, obj.lang); }
+          }
+          if (obj.adaptive === 'simplifying') {
+            document.getElementById('askHint').textContent = '💡 Simplifying explanation…';
+          }
+          if (obj.plan && Array.isArray(obj.plan.steps)) {
+            const activeSteps = obj.plan.steps.filter(step => step.capability !== 'response_synthesis');
+            document.getElementById('askHint').textContent =
+              `🧠 PLAN · ${activeSteps.map(step => step.capability.replaceAll('_', ' ')).join(' → ')}`;
+          }
+          if (obj.stage && obj.stage !== 'book') {
+            document.getElementById('askHint').textContent =
+              obj.stage === 'wikipedia' ? '🌐 Checking Wikipedia…' :
+              obj.stage === 'duckduckgo' ? '🌐 Checking the web…' :
+              document.getElementById('askHint').textContent;
+          }
+          if (obj.sources) {
+            srcTag.innerHTML = '📎 ' +
+              obj.sources.map(s => `<span class="source-chip">${s}</span>`).join('');
+          }
+          if (obj.chart) {
+            chartDataUrl = obj.chart;
+          }
+          if (obj.image) {
+            imageDataUrl = obj.image;
+          }
+          if (obj.video_job) {
+            videoJobId = obj.video_job;
+          }
+          if (obj.sentence) {
+            sentencesQueued++;
+            enqueueSentenceTTS(obj.sentence, detectedLang);
+          }
+          if (obj.token) {
+            fullText += obj.token.replace(/\\n/g, '\n');
+            bubble.innerHTML = ''; bubble.appendChild(document.createTextNode(fullText)); bubble.appendChild(cursor);
+            scrollChat();
+          }
+        } catch {}
+      }
+    }
+
+    cursor.remove();
+    // Strip the raw [CHART:.../IMAGE:.../VIDEO: ...] tag text — rendered as
+    // an image/video below instead
+    const displayText = fullText
+      .replace(/\[CHART:[^\]]*\]/i, '')
+      .replace(/\[IMAGE:[^\]]*\]/i, '')
+      .replace(/\[VIDEO:[^\]]*\]/i, '')
+      .trim();
+    bubble.innerHTML = displayText
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+
+    if (chartDataUrl) {
+      const img = document.createElement('img');
+      img.src = chartDataUrl; img.className = 'chart-img'; img.alt = 'Visual aid';
+      bubble.appendChild(document.createElement('br'));
+      bubble.appendChild(img);
+    }
+    if (imageDataUrl) {
+      const img = document.createElement('img');
+      img.src = imageDataUrl; img.className = 'chart-img'; img.alt = 'Generated example image';
+      bubble.appendChild(document.createElement('br'));
+      bubble.appendChild(img);
+    }
+    if (videoJobId) {
+      const note = document.createElement('div');
+      note.className = 'video-pending';
+      note.textContent = '🎬 Generating example video… (this can take a minute)';
+      bubble.appendChild(document.createElement('br'));
+      bubble.appendChild(note);
+      pollVideoJob(videoJobId, note);
+    }
+
+    // Sentence-level TTS already played each sentence as it streamed in
+    // (parallel scheduling). Only fall back to speaking the whole answer
+    // if, for some reason, no 'sentence' events fired (e.g. a very short
+    // reply with no sentence-ending punctuation).
+    if (sentencesQueued === 0 && voiceEnabled && displayText.trim().length > 5) {
+      enqueueSentenceTTS(displayText, detectedLang);
+    } else if (sentencesQueued === 0) {
+      setHoloState('standby');
+    }
+
+  } catch (e) {
+    if (cursor && cursor.parentNode) cursor.remove();
+    bubble.textContent = '❌ Network error: ' + e.message;
+    setHoloState('standby');
+  }
+
+  isStreaming = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('micBtn').disabled  = false;
+  document.getElementById('askHint').textContent = '↵ to send · 🎤 mic · answers from books only';
+  scrollChat();
+}
+
+function appendMessage(role, text) {
+  const area = document.getElementById('chatArea');
+  const w = document.getElementById('welcome');
+  if (w) w.style.display = 'none';
+
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+
+  // Avatar tile
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar';
+  avatar.textContent = role === 'user' ? '👤' : '🎓';
+  div.appendChild(avatar);
+
+  // Tile body
+  const tile = document.createElement('div');
+  tile.className = 'msg-tile';
+
+  // Tile header
+  const header = document.createElement('div');
+  header.className = 'msg-tile-header';
+  const roleSpan = document.createElement('span');
+  roleSpan.className = 'msg-role';
+  roleSpan.textContent = role === 'user' ? 'YOU' : 'GURU AI';
+  const timeSpan = document.createElement('span');
+  timeSpan.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  header.appendChild(roleSpan);
+  header.appendChild(timeSpan);
+  tile.appendChild(header);
+
+  // Sources + lang (bot only)
+  if (role === 'bot') {
+    const src = document.createElement('div'); src.className = 'sources-tag'; tile.appendChild(src);
+    const lb  = document.createElement('span'); lb.className = 'lang-badge'; tile.appendChild(lb);
+    const feedback = document.createElement('div');
+    feedback.className = 'assistant-feedback';
+    feedback.innerHTML = '<button type="button" title="Helpful" onclick="sendAssistantFeedback(\'positive\')">👍</button>' +
+      '<button type="button" title="Needs improvement" onclick="sendAssistantFeedback(\'negative\')">👎</button>';
+    tile.appendChild(feedback);
+  }
+
+  // Bubble
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  if (text) bubble.textContent = text;
+  tile.appendChild(bubble);
+
+  div.appendChild(tile);
+  area.appendChild(div);
+  scrollChat();
+  return div;
+}
+
+async function sendAssistantFeedback(signal) {
+  try {
+    const response = await fetch('/api/assistant/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID, signal }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Feedback failed');
+    showToast(data.saved ? 'Feedback saved locally' : 'No recent answer to rate', data.saved ? 'ok' : 'err');
+  } catch (error) {
+    showToast(error.message || 'Feedback failed', 'err');
+  }
+}
+
+function scrollChat() {
+  const area = document.getElementById('chatArea');
+  area.scrollTop = area.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════
+//  NEW CHAT
+// ═══════════════════════════════════════════════════════
+async function newChat() {
+  if (isStreaming) return;
+  const audio = document.getElementById('ttsAudio');
+  audio.pause(); audio.src = '';
+  await fetch('/api/history/clear', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: SESSION_ID }),
+  });
+  SESSION_ID = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+  currentLang = 'en';
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '';
+  const w = document.createElement('div');
+  w.id = 'welcome'; w.className = 'welcome';
+  w.innerHTML = `
+    <div class="big-icon">🎓</div>
+    <h2>ASK FROM YOUR BOOKS</h2>
+    <p>Upload books from the sidebar. Ask any question — answers come only from your uploaded books.</p>
+    <div class="hint-chips">
+      <div class="hint-chip" onclick="fillQ('Summarise Chapter 1')">Summarise Chapter 1</div>
+      <div class="hint-chip" onclick="fillQ('What is the main topic?')">Main topic?</div>
+      <div class="hint-chip" onclick="fillQ('Explain the key concepts')">Key concepts</div>
+      <div class="hint-chip" onclick="fillQ('Give me 5 important points')">5 key points</div>
+    </div>`;
+  area.appendChild(w);
+  setHoloState('standby');
+  showToast('New conversation started', 'ok');
+}
+
+// ═══════════════════════════════════════════════════════
+//  MIC / STT — real-time voice (chunked partial + VAD)
+// ═══════════════════════════════════════════════════════
+
+function updateWakeButton() {
+  const button = document.getElementById('wakeBtn');
+  if (!button) return;
+  button.textContent = wakeWordEnabled ? '🔵 HEY SAN ON' : '🟢 HEY SAN OFF';
+  button.classList.toggle('active', wakeWordEnabled);
+}
+
+function handleWakeTranscript(transcript) {
+  const text = String(transcript || '').trim();
+  const lower = text.toLowerCase();
+  const index = lower.indexOf(WAKE_WORD);
+  if (index < 0) return;
+
+  const command = text.slice(index + WAKE_WORD.length).trim();
+  setHoloState('listening');
+  showToast('Hey san is listening', 'ok');
+  if (!command) {
+    document.getElementById('questionInput')?.focus();
+    return;
+  }
+
+  if (command.toLowerCase().startsWith('holo ')) {
+    runHologramCommand(command.slice(5).trim());
+    return;
+  }
+  const utility = command.toLowerCase();
+  if (/\b(what time|current time|today'?s date|what date)\b/.test(utility)) {
+    runAssistantFeature('datetime');
+    return;
+  }
+  if (/\b(system status|cpu|ram|memory|battery|system health)\b/.test(utility)) {
+    runAssistantFeature('system_status');
+    return;
+  }
+  if (/\b(prepare me for today|daily briefing|today'?s briefing|what'?s my briefing)\b/.test(utility)) {
+    runDailyBriefing();
+    return;
+  }
+  if (/^(take a note|save a note|note this|remember this)\b/i.test(command)) {
+    const text = command.replace(/^(take a note|save a note|note this)\s*:?\s*/i, '');
+    if (/^remember this\b/i.test(command)) {
+      runAssistantMemory(text.replace(/^remember this\s*:?\s*/i, ''));
+    } else {
+      runAssistantFeature('note', text);
+    }
+    return;
+  }
+  const input = document.getElementById('questionInput');
+  if (input) input.value = command;
+  askQuestion();
+}
+
+async function runAssistantFeature(feature, text = '') {
+  try {
+    const response = await fetch('/api/assistant/feature', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ feature, text }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Feature failed');
+    const result = data.result || {};
+    const message = feature === 'datetime'
+      ? `It is ${result.time} on ${result.date}.`
+      : feature === 'system_status'
+        ? `CPU ${result.cpu_percent || 'n/a'}%, memory ${result.memory_percent || 'n/a'}%.`
+        : `Note saved: ${result.path}`;
+    appendMessage('bot', message);
+    enqueueSentenceTTS(message, 'en');
+    showToast(message, 'ok');
+  } catch (error) {
+    showToast(error.message || 'Assistant feature failed', 'err');
+  } finally {
+    setHoloState('standby');
+  }
+
+}
+
+async function runAssistantMemory(fact) {
+  const text = String(fact || '').trim();
+  if (!text) {
+    showToast('Tell me what to remember', 'err');
+    return;
+  }
+  try {
+    const response = await fetch('/api/assistant/memory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fact: text }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Memory update failed');
+    const message = 'Got it. I will remember that.';
+    appendMessage('bot', message);
+    enqueueSentenceTTS(message, 'en');
+    showToast('Memory updated', 'ok');
+  } catch (error) {
+    showToast(error.message || 'Memory update failed', 'err');
+  } finally {
+    setHoloState('standby');
+  }
+}
+
+async function runDailyBriefing() {
+  try {
+    const response = await fetch(`/api/assistant/briefing?session_id=${encodeURIComponent(SESSION_ID)}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Briefing failed');
+    const classroom = data.classroom || {};
+    const learning = data.learning || {};
+    const message = [
+      `Today is ${data.datetime?.date || 'today'}, ${data.datetime?.time || ''}.`,
+      classroom.subject
+        ? `Classroom: ${classroom.subject}${classroom.topic ? `, topic ${classroom.topic}` : ''}.`
+        : 'No classroom topic is active.',
+      `Students mastered: ${classroom.mastered_students || 0} of ${classroom.present_students || 0}.`,
+      `${data.local_notes || 0} local notes saved.`,
+      learning.feedback_rows
+        ? `${learning.feedback_rows} learning feedback entries collected.`
+        : 'No learning feedback collected yet.',
+    ].join(' ');
+    appendMessage('bot', message);
+    enqueueSentenceTTS(message, 'en');
+    showToast('Daily briefing ready', 'ok');
+  } catch (error) {
+    showToast(error.message || 'Briefing failed', 'err');
+  } finally {
+    setHoloState('standby');
+  }
+}
+
+function stopWakeWord() {
+  if (wakeRecognition) {
+    wakeRecognition.onend = null;
+    wakeRecognition.stop();
+    wakeRecognition = null;
+  }
+  wakeWordEnabled = false;
+  updateWakeButton();
+}
+
+function toggleWakeWord() {
+  if (wakeWordEnabled) {
+    stopWakeWord();
+    showToast('Hey san wake word off', 'ok');
+    return;
+  }
+
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) {
+    showToast('Wake word needs Chrome speech recognition', 'err');
+    return;
+  }
+
+  const recognition = new Recognition();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = 'en-IN';
+  recognition.onresult = event => {
+    for (let i = event.resultIndex; i < event.results.length; i += 1) {
+      if (event.results[i].isFinal) handleWakeTranscript(event.results[i][0].transcript);
+    }
+  };
+  recognition.onerror = event => {
+    if (event.error !== 'no-speech' && event.error !== 'aborted') {
+      showToast(`Wake word error: ${event.error}`, 'err');
+    }
+  };
+  recognition.onend = () => {
+    if (!wakeWordEnabled) return;
+    try { recognition.start(); } catch (_) {}
+  };
+
+  wakeRecognition = recognition;
+  wakeWordEnabled = true;
+  updateWakeButton();
+  try {
+    recognition.start();
+    showToast('Say “Hey san” to activate', 'ok');
+  } catch (error) {
+    wakeRecognition = null;
+    wakeWordEnabled = false;
+    updateWakeButton();
+    showToast(`Wake word could not start: ${error.message}`, 'err');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  Responsive sentence TTS queue (prefetch next while playing)
+// ═══════════════════════════════════════════════════════
+const ttsQueue = [];
+let ttsPlaying = false;
+let ttsPrefetch = null;
+
+function stopAllTTS() {
+  const audio = document.getElementById('ttsAudio');
+  if (audio) { try { audio.pause(); audio.removeAttribute('src'); audio.load(); } catch(_){} }
+  ttsQueue.length = 0;
+  ttsPlaying = false;
+  if (ttsPrefetch && ttsPrefetch.url) {
+    try { URL.revokeObjectURL(ttsPrefetch.url); } catch(_){}
+  }
+  ttsPrefetch = null;
+}
+
+async function fetchTtsBlob(text, lang) {
+  const resp = await fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, lang, session_id: SESSION_ID }),
+  });
+  if (!resp.ok) throw new Error('tts failed');
+  const buf = await resp.arrayBuffer();
+  const mime = resp.headers.get('Content-Type') || 'audio/wav';
+  return new Blob([buf], { type: mime });
+}
+
+function enqueueSentenceTTS(text, lang) {
+  if (!voiceEnabled) return;
+  const t = String(text || '').trim();
+  if (!t || t.length < 2) return;
+  ttsQueue.push({ text: t, lang: lang || 'en' });
+  pumpTtsQueue();
+}
+
+async function pumpTtsQueue() {
+  if (ttsPlaying) return;
+  if (!ttsQueue.length) {
+    setHoloState('standby');
+    return;
+  }
+  ttsPlaying = true;
+  const item = ttsQueue.shift();
+  try {
+    if (ttsPrefetch && ttsPrefetch.text === item.text && ttsPrefetch.url) {
+      const url = ttsPrefetch.url;
+      ttsPrefetch = null;
+      await playTtsUrl(url);
+    } else {
+      const blob = await fetchTtsBlob(item.text, item.lang);
+      const url = URL.createObjectURL(blob);
+      if (ttsQueue.length) {
+        const nxt = ttsQueue[0];
+        ttsPrefetch = { text: nxt.text, lang: nxt.lang, url: null };
+        fetchTtsBlob(nxt.text, nxt.lang).then(b => {
+          if (ttsPrefetch && ttsPrefetch.text === nxt.text) {
+            ttsPrefetch.url = URL.createObjectURL(b);
+          }
+        }).catch(()=>{});
+      }
+      await playTtsUrl(url);
+    }
+  } catch (e) {
+    console.warn('TTS play error', e);
+  } finally {
+    ttsPlaying = false;
+    if (ttsQueue.length) pumpTtsQueue();
+    else setHoloState('standby');
+  }
+}
+
+function playTtsUrl(url) {
+  return new Promise((resolve) => {
+    const audio = document.getElementById('ttsAudio');
+    if (!audio) { resolve(); return; }
+    const done = () => {
+      audio.onended = null; audio.onerror = null;
+      try { URL.revokeObjectURL(url); } catch(_){}
+      resolve();
+    };
+    audio.onended = done;
+    audio.onerror = done;
+    audio.src = url;
+    setHoloState('speaking');
+    audio.play().catch(done);
+  });
+}
+
+let voiceRealtime = {
+  enabled: true,
+  partialTimer: null,
+  lastPartialText: '',
+  lastPartialAt: 0,
+  analysing: false,
+  audioCtx: null,
+  analyser: null,
+  vadTimer: null,
+  silenceMs: 0,
+  speechSeen: false,
+  maxMs: 12000,
+  silenceStopMs: 850,
+  timesliceMs: 600,
+  optimisticAsk: true,
+  skipFinalIfPartial: true,
+  minPartialWords: 3,
+};
+
+function initMic() {
+  const isSecure = location.protocol === 'https:' ||
+    location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const hasMic = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  if (!isSecure || !hasMic) {
+    const btn = document.getElementById('micBtn');
+    btn.style.opacity = '0.35';
+    btn.onclick = () => {
+      const h = location.hostname;
+      showToast(`Open https://${h}:7000 for mic`, 'err');
+      document.getElementById('askHint').textContent = `⚠️ Mic needs https:// → open https://${h}:7000`;
+    };
+  }
+}
+
+function setLiveTranscript(text, isPartial) {
+  const hint = document.getElementById('askHint');
+  const input = document.getElementById('questionInput') || document.getElementById('askInput');
+  if (text) {
+    if (input) {
+      input.value = text;
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    }
+    if (hint) hint.textContent = isPartial ? `🎤 Listening… ${text}` : `✅ Heard: ${text}`;
+  } else if (hint && isPartial) {
+    hint.textContent = '🎤 Listening… (speak now)';
+  }
+}
+
+function stopVad() {
+  if (voiceRealtime.vadTimer) {
+    clearInterval(voiceRealtime.vadTimer);
+    voiceRealtime.vadTimer = null;
+  }
+  voiceRealtime.silenceMs = 0;
+  voiceRealtime.speechSeen = false;
+  try {
+    if (voiceRealtime.audioCtx) {
+      voiceRealtime.audioCtx.close();
+      voiceRealtime.audioCtx = null;
+      voiceRealtime.analyser = null;
+    }
+  } catch (_) {}
+}
+
+function startVad(stream) {
+  stopVad();
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const source = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    source.connect(analyser);
+    voiceRealtime.audioCtx = ctx;
+    voiceRealtime.analyser = analyser;
+    const data = new Uint8Array(analyser.fftSize);
+    const tickMs = 100;
+    voiceRealtime.vadTimer = setInterval(() => {
+      if (!voiceRealtime.analyser) return;
+      voiceRealtime.analyser.getByteTimeDomainData(data);
+      // RMS energy
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        const v = (data[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / data.length);
+      const speaking = rms > 0.035;
+      if (speaking) {
+        voiceRealtime.speechSeen = true;
+        voiceRealtime.silenceMs = 0;
+      } else if (voiceRealtime.speechSeen) {
+        voiceRealtime.silenceMs += tickMs;
+        if (voiceRealtime.silenceMs >= voiceRealtime.silenceStopMs) {
+          // Auto-stop after trailing silence
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+        }
+      }
+      // Hard max duration
+      if (recSeconds * 1000 >= voiceRealtime.maxMs && mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+    }, tickMs);
+  } catch (e) {
+    console.warn('VAD unavailable', e);
+  }
+}
+
+async function sendPartialStt() {
+  if (!voiceRealtime.enabled || !audioChunks.length || isStreaming) return;
+  if (voiceRealtime.analysing) return;
+  voiceRealtime.analysing = true;
+  try {
+    const mimeType = (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm';
+    const blob = new Blob(audioChunks, { type: mimeType });
+    if (blob.size < 2500) return;
+    const fd = new FormData();
+    fd.append('audio', blob, 'partial.webm');
+    fd.append('session_id', SESSION_ID || 'default');
+    const lang = (document.getElementById('langSelect') || {}).value || '';
+    if (lang) fd.append('lang', lang);
+    const r = await fetch('/api/stt/partial', { method: 'POST', body: fd });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d.skipped) return;
+    if (d.text && d.text.trim()) {
+      voiceRealtime.lastPartialText = d.text.trim();
+      voiceRealtime.lastPartialAt = Date.now();
+      setLiveTranscript(voiceRealtime.lastPartialText, true);
+    }
+  } catch (_) {
+    // partial is best-effort
+  } finally {
+    voiceRealtime.analysing = false;
+  }
+}
+
+async function toggleMic() {
+  if (isStreaming) return;
+  const isSecure = location.protocol === 'https:' ||
+    location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (!isSecure) {
+    showToast(`Open https://${location.hostname}:7000 for mic`, 'err'); return;
+  }
+  if (!navigator.mediaDevices) { showToast('Mic not available', 'err'); return; }
+
+  // Stop recording → finalize
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop(); return;
+  }
+
+  // Barge-in: interrupt assistant for faster turn-taking
+  if (typeof stopAllTTS === 'function') stopAllTTS();
+  else {
+    const _a = document.getElementById('ttsAudio');
+    if (_a) { try { _a.pause(); _a.src = ''; } catch(_){} }
+  }
+
+  // Start real-time recording
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
+      video: false,
+    });
+  } catch (err) {
+    if (err.name === 'NotAllowedError') {
+      showToast('Mic permission denied — allow in browser bar', 'err');
+      document.getElementById('askHint').textContent = '⚠️ Allow mic in browser address bar, tap 🎤 again';
+    } else {
+      showToast('Mic error: ' + err.message, 'err');
+    }
+    return;
+  }
+
+  audioChunks = [];
+  recSeconds = 0;
+  voiceRealtime.lastPartialText = '';
+  voiceRealtime.speechSeen = false;
+  voiceRealtime.silenceMs = 0;
+  const mimeType = ['audio/webm;codecs=opus','audio/webm','audio/ogg','audio/mp4']
+    .find(t => MediaRecorder.isTypeSupported(t)) || '';
+
+  mediaRecorder = new MediaRecorder(micStream, mimeType ? { mimeType } : {});
+  mediaRecorder.ondataavailable = e => {
+    if (e.data && e.data.size > 0) {
+      audioChunks.push(e.data);
+      // Fire partial STT on each timeslice (server rate-limits)
+      sendPartialStt();
+    }
+  };
+  mediaRecorder.onstop = async () => {
+    stopVad();
+    try { micStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+    clearInterval(recTimer);
+    document.getElementById('micBtn').classList.remove('recording');
+    const bar = document.getElementById('recordingBar');
+    if (bar) bar.classList.remove('active');
+
+    const partial = (voiceRealtime.lastPartialText || '').trim();
+    const partialWords = partial ? partial.split(/\s+/).filter(Boolean).length : 0;
+    const partialFresh = partial && (Date.now() - (voiceRealtime.lastPartialAt || 0) < 3500);
+    const canOptimistic = voiceRealtime.optimisticAsk && partialFresh && partialWords >= (voiceRealtime.minPartialWords || 3);
+
+    // Fast path: answer from partial, skip final STT latency
+    if (canOptimistic && voiceRealtime.skipFinalIfPartial) {
+      setLiveTranscript(partial, false);
+      document.getElementById('askHint').textContent = '⚡ Answering…';
+      setHoloState('thinking');
+      await askQuestion();
+      return;
+    }
+
+    if (audioChunks.length === 0) {
+      if (canOptimistic) {
+        setLiveTranscript(partial, false);
+        await askQuestion();
+        return;
+      }
+      setHoloState('standby');
+      document.getElementById('askHint').textContent = '↵ to send · 🎤 mic · answers from books only';
+      return;
+    }
+
+    if (canOptimistic) {
+      setLiveTranscript(partial, false);
+      document.getElementById('askHint').textContent = '⚡ Answering…';
+      await askQuestion();
+      return;
+    }
+
+    const mimeType = (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm';
+    const blob = new Blob(audioChunks, { type: mimeType });
+    const fd = new FormData();
+    fd.append('audio', blob, 'speech.webm');
+    fd.append('session_id', SESSION_ID || 'default');
+    const lang = (document.getElementById('langSelect') || {}).value || '';
+    if (lang) fd.append('lang', lang);
+    document.getElementById('askHint').textContent = '🧠 Finalizing speech…';
+    setHoloState('thinking');
+    try {
+      const r = await fetch('/api/stt', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (!r.ok || d.error) {
+        showToast(d.error || 'STT failed', 'err');
+        if (partial) {
+          setLiveTranscript(partial, false);
+          await askQuestion();
+        } else {
+          setHoloState('standby');
+          document.getElementById('askHint').textContent = '↵ to send · 🎤 mic · answers from books only';
+        }
+        return;
+      }
+      const text = (d.text || '').trim() || partial;
+      if (!text) {
+        showToast('No speech detected', 'err');
+        setHoloState('standby');
+        document.getElementById('askHint').textContent = '↵ to send · 🎤 mic · answers from books only';
+        return;
+      }
+      setLiveTranscript(text, false);
+      await askQuestion();
+    } catch (e) {
+      showToast('STT network error', 'err');
+      if (partial) { setLiveTranscript(partial, false); await askQuestion(); }
+      else setHoloState('standby');
+    }
+  }
+
+
+  // timeslice → real-time chunks
+  mediaRecorder.start(voiceRealtime.timesliceMs);
+  startVad(micStream);
+  document.getElementById('micBtn').classList.add('recording');
+  const bar = document.getElementById('recordingBar');
+  if (bar) bar.classList.add('active');
+  setHoloState('listening');
+  setLiveTranscript('', true);
+  recTimer = setInterval(() => {
+    recSeconds += 1;
+    const el = document.getElementById('recTimer');
+    if (el) el.textContent = `${recSeconds}s`;
+  }, 1000);
+}
+
+
+function captureFrame() {
+  const video = document.getElementById('camFeed');
+  const canvas = document.getElementById('camCanvas');
+  if (!video.videoWidth) return null;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', 0.7);
+}
+
+async function pollAdaptiveSignals() {
+  if (!camEnabled) return;
+  const frame = captureFrame();
+  if (!frame) return;
+
+  try {
+    // Gesture runs every tick (~500 ms). Emotion runs every 5th tick (~2.5 s).
+    gesturePollTick += 1;
+    const gestPromise = fetch('/api/gesture', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: frame }),
+    });
+    const emoPromise = (gesturePollTick % 5 === 1)
+      ? fetch('/api/emotion', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: frame }),
+        })
+      : null;
+
+    const gestResp = await gestPromise;
+    const gest = await gestResp.json();
+    if (emoPromise) {
+      const emoResp = await emoPromise;
+      const emo = await emoResp.json();
+      if (emo && emo.bucket) latestEmotionBucket = emo.bucket;
+    }
+
+    if (gest && gest.interaction) {
+      applyHologramInteraction(gest.interaction);
+    } else {
+      setGestureBadge('READY', false);
+    }
+
+    if (gest && gest.gesture && gest.gesture !== 'none') {
+      latestGesture = gest.gesture;
+
+      // Real-time classroom reactions — preserved from the original system.
+      if (gest.gesture === 'palm_stop') {
+        const audio = document.getElementById('ttsAudio');
+        audio.pause(); audio.src = '';
+        setHoloState('standby');
+        showToast('✋ Paused', 'ok');
+      } else if (gest.gesture === 'raised_hand' && !isStreaming) {
+        document.getElementById('askHint').textContent = '✋ Go ahead, ask your question!';
+      }
+    }
+  } catch {
+    // Sensing is best-effort — never block the lesson on a failed poll.
+  }
+}
+
+function setGestureBadge(action, active = true) {
+  const badge = document.getElementById('holoGestureBadge');
+  if (!badge) return;
+  badge.textContent = `GESTURE · ${String(action || 'READY').toUpperCase()}`;
+  badge.classList.toggle('active', !!active);
+}
+
+function renderHologramTransform() {
+  const wrap = document.querySelector('.holo-figure-wrap');
+  if (!wrap) return;
+  const { x, y, scale, rotateY } = holoInteraction;
+  const sceneScale = Number(wrap.style.getPropertyValue('--scene-scale') || '1');
+  wrap.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${(scale * sceneScale).toFixed(3)}) rotateY(${rotateY}deg)`;
+}
+
+function resetHologramInteraction(showFeedback = true) {
+  holoInteraction = { x: 0, y: 0, scale: 1, rotateY: 0 };
+  const wrap = document.querySelector('.holo-figure-wrap');
+  if (wrap) wrap.classList.remove('gesture-selected');
+  renderHologramTransform();
+  setGestureBadge('RESET', showFeedback);
+}
+
+async function selectNearestHologramPartFromGesture(interaction) {
+  const canvas = document.getElementById('holo3dCanvas');
+  if (!canvas || !holo3dRuntime.projectedParts?.length) return false;
+  const gx = (1 - Number(interaction.x ?? 0.5)) * canvas.width;
+  const gy = Number(interaction.y ?? 0.5) * canvas.height;
+  let hit = null, best = Infinity;
+  for (const p of holo3dRuntime.projectedParts) {
+    const d = Math.hypot(gx - p.x, gy - p.y);
+    if (d < best) { hit = p; best = d; }
+  }
+  const threshold = Math.max(canvas.width, canvas.height) * 0.20;
+  if (hit && best <= threshold) {
+    await hologramAction('select_part', hit.name);
+    await afterPartSelected(hit.name);
+    showToast(`Gesture selected: ${hit.name}`, 'ok');
+    return true;
+  }
+  return false;
+}
+
+function applyHologramInteraction(interaction) {
+  const action = interaction.action || 'none';
+  const wrap = document.querySelector('.holo-figure-wrap');
+  if (!wrap) return;
+
+  if (action === 'move') {
+    // Mirror X so movement feels natural when using a front-facing camera.
+    holoInteraction.x = (0.5 - Number(interaction.x || 0.5)) * 150;
+    holoInteraction.y = (Number(interaction.y || 0.5) - 0.5) * 90;
+    setGestureBadge('MOVE');
+  } else if (action === 'rotate') {
+    holoInteraction.rotateY = (0.5 - Number(interaction.x || 0.5)) * 120;
+    setGestureBadge('ROTATE');
+  } else if (action === 'zoom') {
+    holoInteraction.scale = Math.min(1.75, Math.max(0.75, Number(interaction.zoom || 1)));
+    setGestureBadge('ZOOM');
+  } else if (action === 'select') {
+    const now = Date.now();
+    wrap.classList.add('gesture-selected');
+    setTimeout(() => wrap.classList.remove('gesture-selected'), 450);
+    setGestureBadge('SELECT');
+    if (now - lastSelectAt > 1800) {
+      lastSelectAt = now;
+      selectNearestHologramPartFromGesture(interaction).then(found => {
+        if (!found) showToast('🤏 Hologram selected', 'ok');
+      });
+    }
+  } else if (action === 'reset') {
+    resetHologramInteraction(true);
+    return;
+  } else {
+    setGestureBadge('READY', false);
+    return;
+  }
+
+  renderHologramTransform();
+}
+
+
+
+function looksLikeHologramCommand(text) {
+  const s = String(text || '').toLowerCase().trim();
+  return /^(holo|hologram|guru)[,\s:-]/.test(s) ||
+    /\b(orbit|explode view|implode|x[- ]?ray|scan mode|next layer|previous layer|reset hologram|focus on|compare mode|show heart|show engine|show molecule|show anatomy|show brain|show cell|show solar|show imported|quiz mode|tour mode|save bookmark|load bookmark|slice|cross section|freeze|unfreeze|labels?|orbit speed|wire|measure|distance|explode anim|clip)\b/.test(s);
+}
+
+function normalizeVoiceHologramCommand(text) {
+  return String(text || '')
+    .replace(/^(hey\s+)?(holo|hologram|guru)[,\s:-]*/i, '')
+    .replace(/turn\s+on\s+/i, '')
+    .trim();
+}
+
+async function setHologramAsset(asset) {
+  if (asset === 'imported' && !holoImportedModel) { showToast('Import a .obj or .glb model first', 'err'); return; }
+  await hologramAction('set_asset', asset);
+  logHoloEvent(`Asset · ${String(asset).toUpperCase()}`);
+  if (holoQuiz.active) nextQuizQuestion();
+}
+
+function toggle3DModel() {
+  holo3dEnabled = !holo3dEnabled;
+  const panel = document.getElementById('holoPanel');
+  panel.dataset.model3d = holo3dEnabled ? 'true' : 'false';
+  setToolActive('3d', holo3dEnabled);
+  showToast(holo3dEnabled ? '3D hologram core on' : '3D hologram core hidden', 'ok');
+}
+
+function initHolo3D() {
+  const canvas = document.getElementById('holo3dCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const resize = () => {
+    const r = canvas.getBoundingClientRect();
+    canvas.width = Math.max(320, Math.round(r.width * devicePixelRatio));
+    canvas.height = Math.max(220, Math.round(r.height * devicePixelRatio));
+  };
+  resize(); window.addEventListener('resize', resize);
+
+  function rotY(p,a){const c=Math.cos(a),s=Math.sin(a);return[p[0]*c-p[2]*s,p[1],p[0]*s+p[2]*c];}
+  function rotX(p,a){const c=Math.cos(a),s=Math.sin(a);return[p[0],p[1]*c-p[2]*s,p[1]*s+p[2]*c];}
+  function project(p,w,h){const z=p[2]+4.2;const f=Math.min(w,h)*.36/Math.max(.8,z);return[w/2+p[0]*f,h/2+p[1]*f,z];}
+  function tx(p,yaw,pitch,w,h){let q=rotY(p,yaw);q=rotX(q,pitch);return project(q,w,h);}
+  function line(a,b,yaw,pitch,w,h,alpha=.55,width=1.1){
+    const A=tx(a,yaw,pitch,w,h),B=tx(b,yaw,pitch,w,h);ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.lineTo(B[0],B[1]);
+    ctx.strokeStyle=`rgba(80,240,255,${alpha})`;ctx.lineWidth=width*devicePixelRatio;ctx.stroke();
+  }
+  function ring(center,r,yaw,pitch,w,h,alpha=.35){
+    const pts=[];for(let i=0;i<=32;i++){const a=i/32*Math.PI*2;pts.push([center[0]+Math.cos(a)*r,center[1]+Math.sin(a)*r,center[2]]);}
+    ctx.beginPath();pts.forEach((p,i)=>{const s=tx(p,yaw,pitch,w,h);i?ctx.lineTo(s[0],s[1]):ctx.moveTo(s[0],s[1]);});
+    ctx.strokeStyle=`rgba(80,240,255,${alpha})`;ctx.lineWidth=devicePixelRatio;ctx.stroke();
+  }
+  function blob(part,pos,yaw,pitch,w,h,selected,xray){
+    const s=tx(pos,yaw,pitch,w,h);const rr=(part.r||.26)*Math.min(w,h)*.052;
+    ctx.beginPath();ctx.ellipse(s[0],s[1],rr*(selected?1.18:1),rr*.82,0,0,Math.PI*2);
+    ctx.fillStyle=selected?'rgba(190,255,255,.95)':(xray?'rgba(40,210,255,.16)':'rgba(35,225,255,.34)');
+    ctx.strokeStyle=selected?'rgba(235,255,255,1)':'rgba(85,245,255,.72)';ctx.lineWidth=(selected?2:1)*devicePixelRatio;
+    ctx.shadowBlur=(selected?20:9)*devicePixelRatio;ctx.shadowColor='rgba(0,255,255,.65)';ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+    if(selected){ctx.font=`${10*devicePixelRatio}px monospace`;ctx.fillStyle='rgba(220,255,255,.98)';ctx.fillText(part.name.toUpperCase(),s[0]+rr+7*devicePixelRatio,s[1]);}
+    holo3dRuntime.projectedParts.push({name:part.name,x:s[0],y:s[1],r:Math.max(18*devicePixelRatio,rr*1.45)});
+  }
+  function explodedPosition(part,explode,index,total){
+    const p=[...part.p];if(!explode)return p;const a=(index/Math.max(1,total))*Math.PI*2;
+    p[0]+=Math.cos(a)*explode*.70;p[1]+=Math.sin(a)*explode*.54;p[2]+=((index%2)?1:-1)*explode*.20;return p;
+  }
+  function drawAsset(assetKey,scene,w,h){
+    if(assetKey==='imported' && holoImportedModel){ return drawImportedAsset(holoImportedModel, scene, w, h); }
+    const asset=HOLO_ASSETS[assetKey]||HOLO_ASSETS.heart;const focus=String(scene.selected_part||scene.focus||'auto').toLowerCase();
+    const explode=Math.min(1,Math.max(0,Number(scene.explode||0)/100));const xray=!!scene.xray;
+    holo3dRuntime.projectedParts=[];
+    const pts=asset.parts.map((part,i)=>explodedPosition(part,explode,i,asset.parts.length));
+    // Bonds / structural links keep the model readable.
+    for(let i=1;i<pts.length;i++) line(pts[0],pts[i],holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,xray?.22:.48,1);
+    if(assetKey==='engine') { line(pts[0],pts[4],holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,.6,1.4); line(pts[2],pts[4],holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,.6,1.4); }
+    if(assetKey==='anatomy') { line(pts[0],pts[1],holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,.6,1.5); line(pts[1],pts[2],holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,.6,1.5); line(pts[2],pts[5],holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,.6,1.5); }
+    pts.forEach((p,i)=>{const part=asset.parts[i];const sel=focus!=='auto' && (part.name.includes(focus)||focus.includes(part.name));blob(part,p,holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,sel,xray);});
+    if(scene.labels !== false){
+      pts.forEach((p,i)=>{
+        const part=asset.parts[i];
+        const s=project(p,holo3dRuntime.yaw,holo3dRuntime.pitch,w,h);
+        ctx.save(); ctx.globalCompositeOperation='source-over';
+        ctx.fillStyle='rgba(180,255,255,.85)'; ctx.font=`${9*devicePixelRatio}px monospace`;
+        ctx.fillText(String(part.name||'').toUpperCase(), s[0]+8*devicePixelRatio, s[1]-6*devicePixelRatio);
+        ctx.restore();
+      });
+    }
+    // Wire density: extra structural spokes
+    if(Number(scene.wire_density||1)>=2){
+      for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+        if((i+j)%2===0) line(pts[i],pts[j],holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,.18,.7);
+      }
+    }
+    ring([0,0,0],1.18+Math.sin(holo3dRuntime.t*2)*.025,holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,xray?.18:.38);
+  }
+  function drawImportedAsset(model, scene, w, h){
+    holo3dRuntime.projectedParts=[];
+    const verts=(model.vertices||[]); const edges=(model.edges||[]); const explode=Math.min(1,Math.max(0,Number(scene.explode||0)/100));
+    const focus=(scene.selected_part||scene.focus||'imported model');
+    const expVerts=verts.map((v,i)=>{ const a=(i/Math.max(1,verts.length))*Math.PI*2; return [v[0]+Math.cos(a)*explode*.15, v[1]+Math.sin(a)*explode*.15, v[2]]; });
+    edges.forEach(e=>{ const a=expVerts[e[0]], b=expVerts[e[1]]; if(a&&b) line(a,b,holo3dRuntime.yaw,holo3dRuntime.pitch,w,h,.62,1); });
+    if (expVerts.length) {
+      let sx=0,sy=0,sz=0; expVerts.forEach(v=>{sx+=v[0];sy+=v[1];sz+=v[2];}); const c=[sx/expVerts.length,sy/expVerts.length,sz/expVerts.length];
+      const s=project(c,holo3dRuntime.yaw,holo3dRuntime.pitch,w,h);
+      ctx.beginPath(); ctx.arc(s[0], s[1], 16*devicePixelRatio, 0, Math.PI*2); ctx.fillStyle='rgba(0,255,255,.14)'; ctx.fill();
+      ctx.font=`${10*devicePixelRatio}px monospace`; ctx.fillStyle='rgba(220,255,255,.98)'; ctx.fillText(String(model.label||focus).toUpperCase(), s[0]+20*devicePixelRatio, s[1]);
+      holo3dRuntime.projectedParts.push({name:String(model.label||'imported model').toLowerCase(), x:s[0], y:s[1], r:28*devicePixelRatio});
+    }
+  }
+
+  function frame(){
+    const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);const scene=holoScene||{};
+    const frozen = !!scene.freeze;
+    const spd = Math.max(0.25, Math.min(3, Number(scene.orbit_speed||1)));
+    if(!frozen){
+      if(scene.orbit) holo3dRuntime.yaw += .006 * spd;
+      else holo3dRuntime.yaw += ((holoInteraction.rotateY||0)*Math.PI/180-holo3dRuntime.yaw)*.04;
+      holo3dRuntime.t += .018 * spd;
+    }
+    ctx.save();ctx.globalCompositeOperation='lighter';drawAsset(scene.asset||'heart',scene,w,h);
+    if(scene.scan && !frozen){const y=((holo3dRuntime.t*.22)%1)*h;const g=ctx.createLinearGradient(0,y-18,0,y+18);g.addColorStop(0,'rgba(0,255,255,0)');g.addColorStop(.5,'rgba(0,255,255,.28)');g.addColorStop(1,'rgba(0,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,y-20,w,40);}
+    // Cross-section slice plane visualization
+    if(scene.section_enabled){
+      const axis = String(scene.section_axis||'y').toLowerCase();
+      const pos = Math.max(0, Math.min(100, Number(scene.section_pos||50))) / 100;
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = 'rgba(0,255,200,.55)';
+      ctx.fillStyle = 'rgba(0,255,200,.08)';
+      ctx.lineWidth = 1.5 * devicePixelRatio;
+      ctx.setLineDash([6*devicePixelRatio, 4*devicePixelRatio]);
+      if(axis === 'x'){
+        const x = pos * w;
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+        ctx.fillRect(0,0,x,h);
+      } else if(axis === 'z'){
+        // diagonal-ish depth cue
+        const x = pos * w;
+        ctx.beginPath(); ctx.moveTo(x, h*0.15); ctx.lineTo(x, h*0.85); ctx.stroke();
+        ctx.fillRect(0,0,x,h);
+      } else {
+        const y = (1-pos) * h;
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+        ctx.fillRect(0,0,w,y);
+      }
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(0,255,200,.75)';
+      ctx.font = `${10*devicePixelRatio}px monospace`;
+      ctx.fillText(`SLICE ${axis.toUpperCase()} ${Math.round(pos*100)}%`, 10*devicePixelRatio, 16*devicePixelRatio);
+      ctx.restore();
+    }
+    if(scene.freeze){
+      ctx.save(); ctx.globalCompositeOperation='source-over';
+      ctx.fillStyle='rgba(255,200,80,.8)'; ctx.font=`${10*devicePixelRatio}px monospace`;
+      ctx.fillText('FREEZE', w - 52*devicePixelRatio, 16*devicePixelRatio);
+      ctx.restore();
+    }
+    if(scene.explode_anim){
+      if(!holo3dRuntime._animStart) holo3dRuntime._animStart = performance.now();
+      const ms = Math.max(300, Number(scene.explode_anim_ms||1800));
+      const t = Math.min(1, (performance.now() - holo3dRuntime._animStart) / ms);
+      const a = Number(scene.explode_anim_from||0), b = Number(scene.explode_anim_to||100);
+      scene.explode = Math.round(a + (b-a)*t);
+      if(t >= 1){
+        holo3dRuntime._animStart = 0;
+        if(!holo3dRuntime._animDone){
+          holo3dRuntime._animDone = true;
+          hologramAction('set_explode_anim_progress', 1).then(()=>{ holo3dRuntime._animDone = false; });
+        }
+      }
+    } else { holo3dRuntime._animStart = 0; }
+    if(scene.measure_enabled && scene.measure_a && scene.measure_b){
+      const pa = (holo3dRuntime.projectedParts||[]).find(p => String(p.name).toLowerCase()===String(scene.measure_a).toLowerCase());
+      const pb = (holo3dRuntime.projectedParts||[]).find(p => String(p.name).toLowerCase()===String(scene.measure_b).toLowerCase());
+      if(pa && pb){
+        ctx.save(); ctx.globalCompositeOperation='source-over';
+        ctx.strokeStyle='rgba(255,220,80,.9)'; ctx.lineWidth=1.5*devicePixelRatio;
+        ctx.setLineDash([4*devicePixelRatio, 3*devicePixelRatio]);
+        ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+        ctx.setLineDash([]);
+        const mx=(pa.x+pb.x)/2, my=(pa.y+pb.y)/2;
+        const label = scene.measure_distance != null ? `${Number(scene.measure_distance).toFixed(2)} u` : '…';
+        ctx.fillStyle='rgba(0,10,20,.75)'; ctx.fillRect(mx-28*devicePixelRatio, my-12*devicePixelRatio, 56*devicePixelRatio, 16*devicePixelRatio);
+        ctx.fillStyle='rgba(255,230,120,.95)'; ctx.font=`${10*devicePixelRatio}px monospace`;
+        ctx.fillText(label, mx-22*devicePixelRatio, my+2*devicePixelRatio);
+        ctx.restore();
+      }
+    }
+    if(scene.clip_enabled){
+      const cl = scene.clip_layers || {};
+      const bits = ['surface','structure','internal','labels'].filter(k => cl[k] !== false).map(k => k.slice(0,3).toUpperCase());
+      ctx.save(); ctx.globalCompositeOperation='source-over';
+      ctx.fillStyle='rgba(160,120,255,.85)'; ctx.font=`${9*devicePixelRatio}px monospace`;
+      ctx.fillText('CLIP '+bits.join('|'), 10*devicePixelRatio, h - 10*devicePixelRatio);
+      ctx.restore();
+    }
+    ctx.restore();requestAnimationFrame(frame);
+  }
+  canvas.addEventListener('click', async ev=>{
+    const rect=canvas.getBoundingClientRect();const sx=canvas.width/rect.width,sy=canvas.height/rect.height;const x=(ev.clientX-rect.left)*sx,y=(ev.clientY-rect.top)*sy;
+    let hit=null,best=Infinity;for(const p of holo3dRuntime.projectedParts){const d=Math.hypot(x-p.x,y-p.y);if(d<p.r&&d<best){hit=p;best=d;}}
+    if(hit){
+      if(holoScene && holoScene.measure_enabled){
+        await hologramAction('measure_pick', hit.name);
+        await refreshHologramState();
+        const s2 = holoScene || {};
+        const parts = holo3dRuntime.projectedParts || [];
+        if(s2.measure_a && s2.measure_b){
+          const pa = parts.find(p => String(p.name).toLowerCase() === String(s2.measure_a).toLowerCase());
+          const pb = parts.find(p => String(p.name).toLowerCase() === String(s2.measure_b).toLowerCase());
+          if(pa && pb){
+            const dist = Math.hypot(pa.x-pb.x, pa.y-pb.y) / (Math.min(canvas.width, canvas.height) * 0.35);
+            await hologramAction('set_measure_distance', Number(dist.toFixed(3)));
+            showToast(`Measure: ${s2.measure_a} → ${s2.measure_b} = ${dist.toFixed(2)} u`, 'ok');
+          } else showToast(`Measure: ${s2.measure_a} → ${s2.measure_b}`, 'ok');
+        } else showToast(`Measure A: ${hit.name} — pick second part`, 'ok');
+      } else {
+        await hologramAction('select_part',hit.name);await afterPartSelected(hit.name);showToast(`Selected: ${hit.name}`,'ok');
+      }
+    }
+  });
+  requestAnimationFrame(frame);
+}
+
+function updateRoomHud(participants = null) {
+  document.getElementById('roomStatus').textContent = roomState.connected ? 'CONNECTED' : 'OFFLINE';
+  document.getElementById('roomMeta').textContent = roomState.connected ? `ROOM · ${roomState.roomId}` : 'ROOM · —';
+  document.getElementById('roomUserLabel').textContent = `USER · ${String(roomState.name || 'SOLO').toUpperCase()}`;
+  const list = document.getElementById('roomParticipants');
+  if (participants && participants.length) {
+    list.innerHTML = participants.map(p => `<div>${p.name}${p.user_id === roomState.userId ? ' · YOU' : ''}</div>`).join('');
+  } else {
+    list.textContent = roomState.connected ? 'Waiting for participants…' : 'No room joined.';
+  }
+}
+
+function updateImportBadge(text) {
+  document.getElementById('importBadge').textContent = text || 'MODEL IMPORT · NONE';
+}
+
+async function toggleRoomJoin() {
+  if (roomState.connected) {
+    await leaveHoloRoom();
+    return;
+  }
+  const roomId = (prompt('Enter room ID','classroom-1') || '').trim();
+  if (!roomId) return;
+  const name = (prompt('Enter display name', roomState.name || 'Student') || '').trim() || 'Student';
+  roomState.name = name;
+  localStorage.setItem('holoUserName', name);
+  const r = await fetch('/api/holo-room/join', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room_id: roomId, user_id: roomState.userId, name })});
+  const d = await r.json();
+  roomState.connected = true; roomState.roomId = roomId; roomState.lastSceneTs = 0; roomState.lastAnnoTs = 0;
+  updateRoomHud(d.participants || []);
+  if (roomState.timer) clearInterval(roomState.timer);
+  roomState.timer = setInterval(refreshRoomState, 1000);
+  logHoloEvent(`Room joined · ${roomId}`);
+  showToast(`Joined room ${roomId}`, 'ok');
+  await syncRoomScene();
+}
+
+async function leaveHoloRoom() {
+  if (!roomState.connected) return;
+  try { await fetch('/api/holo-room/leave', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room_id: roomState.roomId, user_id: roomState.userId })}); } catch {}
+  roomState.connected = false;
+  if (roomState.timer) { clearInterval(roomState.timer); roomState.timer = null; }
+  updateRoomHud([]);
+  logHoloEvent('Room left');
+  showToast('Left room', 'ok');
+}
+
+async function refreshRoomState() {
+  if (!roomState.connected) return;
+  try {
+    const r = await fetch(`/api/holo-room/state?room_id=${encodeURIComponent(roomState.roomId)}&user_id=${encodeURIComponent(roomState.userId)}`);
+    const d = await r.json();
+    updateRoomHud(d.participants || []);
+    if (d.scene?.state && d.scene.ts > roomState.lastSceneTs && d.scene.by !== roomState.userId) {
+      roomState.lastSceneTs = d.scene.ts;
+      roomState.applyingRemote = true;
+      applyHologramScene(d.scene.state);
+      roomState.applyingRemote = false;
+      logHoloEvent(`Remote scene · ${d.scene.by}`);
+    }
+    if (d.annotation && d.annotation.ts > roomState.lastAnnoTs && d.annotation.by !== roomState.userId) {
+      roomState.lastAnnoTs = d.annotation.ts;
+      holoAnnotation.remotePointer = d.annotation.pointer || null;
+      holoAnnotation.remoteStrokes = d.annotation.strokes || [];
+      drawHoloOverlay();
+    }
+  } catch {
+    // Keep interaction smooth even if sync fails.
+  }
+}
+
+async function syncRoomScene() {
+  if (!roomState.connected || roomState.applyingRemote || !holoScene) return;
+  try {
+    const r = await fetch('/api/holo-room/scene', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room_id: roomState.roomId, user_id: roomState.userId, state: holoScene }) });
+    const d = await r.json();
+    roomState.lastSceneTs = d.scene?.ts || roomState.lastSceneTs;
+    updateRoomHud(d.participants || []);
+  } catch {}
+}
+
+async function syncRoomAnnotation(payload) {
+  if (!roomState.connected) return;
+  try {
+    const r = await fetch('/api/holo-room/annotation', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ room_id: roomState.roomId, user_id: roomState.userId, ...payload }) });
+    const d = await r.json();
+    roomState.lastAnnoTs = d.annotation?.ts || roomState.lastAnnoTs;
+  } catch {}
+}
+
+function setAnnotationMode(mode) {
+  const next = holoAnnotation.mode === mode ? 'none' : mode;
+  holoAnnotation.mode = next;
+  const panel = document.getElementById('holoPanel');
+  panel.classList.toggle('annotate-pointer', next === 'pointer');
+  panel.classList.toggle('annotate-draw', next === 'draw');
+  setToolActive('pointer', next === 'pointer');
+  setToolActive('draw', next === 'draw');
+  showToast(next === 'none' ? 'Annotation off' : `Annotation ${next} mode`, 'ok');
+}
+
+function clearAnnotations() {
+  holoAnnotation.strokes = [];
+  holoAnnotation.remoteStrokes = [];
+  holoAnnotation.pointer = null;
+  holoAnnotation.remotePointer = null;
+  drawHoloOverlay();
+  syncRoomAnnotation({ clear: true });
+  logHoloEvent('Annotations cleared');
+}
+
+function drawHoloOverlay() {
+  const canvas = document.getElementById('holoOverlayCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const drawStrokeSet = (strokes, alpha=1) => {
+    for (const s of strokes || []) {
+      const pts = s.points || [];
+      if (pts.length < 2) continue;
+      ctx.beginPath();
+      ctx.lineWidth = 2 * devicePixelRatio;
+      ctx.strokeStyle = `rgba(0,255,255,${alpha})`;
+      ctx.shadowBlur = 8 * devicePixelRatio;
+      ctx.shadowColor = 'rgba(0,255,255,.35)';
+      ctx.moveTo(pts[0].x * w, pts[0].y * h);
+      for (let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x * w, pts[i].y * h);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+  };
+  drawStrokeSet(holoAnnotation.remoteStrokes, .5);
+  drawStrokeSet(holoAnnotation.strokes, .92);
+  const drawPointer = (ptr, color) => {
+    if (!ptr) return;
+    const x = ptr.x * w, y = ptr.y * h;
+    ctx.beginPath(); ctx.arc(x, y, 6 * devicePixelRatio, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, 18 * devicePixelRatio, 0, Math.PI * 2); ctx.strokeStyle = color; ctx.globalAlpha = .45; ctx.stroke(); ctx.globalAlpha = 1;
+  };
+  drawPointer(holoAnnotation.remotePointer, 'rgba(255,180,0,.95)');
+  drawPointer(holoAnnotation.pointer, 'rgba(255,70,70,.98)');
+}
+
+function initHoloOverlay() {
+  const canvas = document.getElementById('holoOverlayCanvas');
+  const stage = document.getElementById('holo3dStage');
+  if (!canvas || !stage) return;
+  const resize = () => {
+    const r = stage.getBoundingClientRect();
+    canvas.width = Math.max(320, Math.round(r.width * devicePixelRatio));
+    canvas.height = Math.max(220, Math.round(r.height * devicePixelRatio));
+    drawHoloOverlay();
+  };
+  resize();
+  window.addEventListener('resize', resize);
+  const pointFromEvent = ev => {
+    const rect = canvas.getBoundingClientRect();
+    return { x: Math.min(1, Math.max(0, (ev.clientX - rect.left) / rect.width)), y: Math.min(1, Math.max(0, (ev.clientY - rect.top) / rect.height)) };
+  };
+  canvas.addEventListener('mousedown', ev => {
+    if (holoAnnotation.mode !== 'draw') return;
+    holoAnnotation.drawing = true;
+    holoAnnotation.currentStroke = { points: [pointFromEvent(ev)] };
+    holoAnnotation.strokes.push(holoAnnotation.currentStroke);
+    drawHoloOverlay();
+  });
+  canvas.addEventListener('mousemove', ev => {
+    const pt = pointFromEvent(ev);
+    if (holoAnnotation.mode === 'pointer') {
+      holoAnnotation.pointer = pt;
+      drawHoloOverlay();
+      const now = Date.now();
+      if (now - lastPointerSyncAt > 80) { lastPointerSyncAt = now; syncRoomAnnotation({ pointer: pt }); }
+    }
+    if (holoAnnotation.mode === 'draw' && holoAnnotation.drawing && holoAnnotation.currentStroke) {
+      holoAnnotation.currentStroke.points.push(pt);
+      holoAnnotation.currentStroke.points = holoAnnotation.currentStroke.points.slice(-120);
+      drawHoloOverlay();
+    }
+  });
+  window.addEventListener('mouseup', () => {
+    if (holoAnnotation.mode === 'draw' && holoAnnotation.drawing && holoAnnotation.currentStroke) {
+      syncRoomAnnotation({ stroke: holoAnnotation.currentStroke });
+    }
+    holoAnnotation.drawing = false;
+    holoAnnotation.currentStroke = null;
+  });
+  canvas.addEventListener('mouseleave', () => {
+    if (holoAnnotation.mode === 'pointer') { holoAnnotation.pointer = null; drawHoloOverlay(); syncRoomAnnotation({ pointer: null }); }
+  });
+}
+
+function openModelImport() {
+  document.getElementById('modelInput').click();
+}
+
+function normalizeVertices(vertices) {
+  if (!vertices.length) return vertices;
+  let minX=Infinity,minY=Infinity,minZ=Infinity,maxX=-Infinity,maxY=-Infinity,maxZ=-Infinity;
+  vertices.forEach(v => { minX=Math.min(minX,v[0]); minY=Math.min(minY,v[1]); minZ=Math.min(minZ,v[2]); maxX=Math.max(maxX,v[0]); maxY=Math.max(maxY,v[1]); maxZ=Math.max(maxZ,v[2]); });
+  const cx=(minX+maxX)/2, cy=(minY+maxY)/2, cz=(minZ+maxZ)/2;
+  const scale = Math.max(maxX-minX, maxY-minY, maxZ-minZ) || 1;
+  return vertices.map(v => [((v[0]-cx)/scale)*2, ((v[1]-cy)/scale)*2, ((v[2]-cz)/scale)*2]);
+}
+
+function parseOBJModel(text, name='IMPORTED OBJ') {
+  const verts=[]; const edges=[]; const edgeSet=new Set();
+  const addEdge=(a,b)=>{ if(a===b||a<0||b<0) return; const key=a<b?`${a}_${b}`:`${b}_${a}`; if(edgeSet.has(key)) return; edgeSet.add(key); edges.push([a,b]); };
+  String(text).split(/\r?\n/).forEach(line => {
+    line=line.trim();
+    if (line.startsWith('v ')) {
+      const p=line.split(/\s+/).slice(1).map(Number); if (p.length>=3) verts.push([p[0], p[1], p[2]]);
+    } else if (line.startsWith('f ')) {
+      const idx=line.split(/\s+/).slice(1).map(tok => parseInt(tok.split('/')[0],10)-1).filter(n=>!Number.isNaN(n));
+      for (let i=0;i<idx.length;i++) addEdge(idx[i], idx[(i+1)%idx.length]);
+    }
+  });
+  return { label: name, vertices: normalizeVertices(verts), edges };
+}
+
+function numComponents(type) { return ({SCALAR:1,VEC2:2,VEC3:3,VEC4:4})[type] || 1; }
+function compArray(componentType) { return ({5126:Float32Array,5125:Uint32Array,5123:Uint16Array,5121:Uint8Array,5122:Int16Array,5120:Int8Array})[componentType]; }
+function compSize(componentType) { return ({5126:4,5125:4,5123:2,5121:1,5122:2,5120:1})[componentType] || 4; }
+function readAccessor(gltf, accessorIndex, bin) {
+  const accessor = gltf.accessors[accessorIndex]; const view = gltf.bufferViews[accessor.bufferView];
+  const count = accessor.count; const comps = numComponents(accessor.type); const Arr = compArray(accessor.componentType);
+  const byteOffset = (view.byteOffset || 0) + (accessor.byteOffset || 0); const len = count * comps;
+  return new Arr(bin, byteOffset, len);
+}
+function parseGLBModel(buffer, name='IMPORTED GLB') {
+  const dv = new DataView(buffer); if (dv.getUint32(0, true) !== 0x46546C67) throw new Error('Invalid GLB');
+  let off = 12; let json = null; let bin = null;
+  while (off < buffer.byteLength) {
+    const chunkLen = dv.getUint32(off, true); const chunkType = dv.getUint32(off+4, true); off += 8;
+    const chunk = buffer.slice(off, off + chunkLen); off += chunkLen;
+    if (chunkType === 0x4E4F534A) json = JSON.parse(new TextDecoder().decode(chunk));
+    else if (chunkType === 0x004E4942) bin = chunk;
+  }
+  if (!json || !bin) throw new Error('GLB missing JSON/BIN');
+  const verts=[]; const edges=[]; const edgeSet=new Set(); const addEdge=(a,b)=>{ const k=a<b?`${a}_${b}`:`${b}_${a}`; if(!edgeSet.has(k)){edgeSet.add(k);edges.push([a,b]);} };
+  let vOffset = 0;
+  (json.meshes || []).forEach(mesh => (mesh.primitives || []).forEach(prim => {
+    if (prim.attributes?.POSITION == null) return;
+    const pos = readAccessor(json, prim.attributes.POSITION, bin);
+    const localVerts=[];
+    for (let i=0;i<pos.length;i+=3) { const v=[pos[i], pos[i+1], pos[i+2]]; localVerts.push(v); verts.push(v); }
+    if (prim.indices != null) {
+      const ind = readAccessor(json, prim.indices, bin);
+      for (let i=0;i<ind.length;i+=3) {
+        const a=vOffset+ind[i], b=vOffset+ind[i+1], c=vOffset+ind[i+2]; addEdge(a,b); addEdge(b,c); addEdge(c,a);
+      }
+    } else {
+      for (let i=0;i<localVerts.length-1;i+=3) { const a=vOffset+i,b=vOffset+i+1,c=vOffset+i+2; addEdge(a,b); addEdge(b,c); addEdge(c,a); }
+    }
+    vOffset += localVerts.length;
+  }));
+  return { label: name, vertices: normalizeVertices(verts), edges };
+}
+
+function initModelUpload() {
+  const input = document.getElementById('modelInput');
+  if (!input) return;
+  input.addEventListener('change', async () => {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      let model;
+      if (/\.obj$/i.test(file.name)) {
+        model = parseOBJModel(await file.text(), file.name);
+      } else if (/\.glb$/i.test(file.name)) {
+        model = parseGLBModel(await file.arrayBuffer(), file.name);
+      } else {
+        throw new Error('Only .obj and .glb supported');
+      }
+      if (!model.vertices?.length) throw new Error('Model has no readable geometry');
+      holoImportedModel = model;
+      updateImportBadge(`MODEL IMPORT · ${file.name}`);
+      await hologramAction('set_asset', 'imported');
+      showToast(`Imported 3D model: ${file.name}`, 'ok');
+      logHoloEvent(`Model imported · ${file.name}`);
+    } catch (err) {
+      updateImportBadge('MODEL IMPORT · FAILED');
+      showToast(`Import failed: ${err.message}`, 'err');
+    }
+    input.value = '';
+  });
+}
+
+function logHoloEvent(text) {
+  const stamp = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  holoEventEntries.unshift(`[${stamp}] ${text}`);
+  holoEventEntries = holoEventEntries.slice(0, 8);
+  const log = document.getElementById('holoEventLog');
+  if (log) log.innerHTML = holoEventEntries.map(e => `<div class="holo-log-item">${e}</div>`).join('');
+}
+
+function updateQuizHud() {
+  const status = document.getElementById('quizStatus');
+  const prompt = document.getElementById('quizPrompt');
+  if (!status || !prompt) return;
+  if (!holoQuiz.active) {
+    status.textContent = 'QUIZ · OFF';
+    prompt.textContent = 'Start quiz to test hotspot identification.';
+    setToolActive('quiz', false);
+    return;
+  }
+  status.textContent = `QUIZ · SCORE ${holoQuiz.score}/${holoQuiz.total}`;
+  prompt.textContent = holoQuiz.target ? `Identify: ${String(holoQuiz.target).toUpperCase()}` : 'Preparing question…';
+  setToolActive('quiz', true);
+}
+
+function nextQuizQuestion() {
+  const key = holoScene?.asset || 'heart';
+  if (key === 'imported') { holoQuiz.target = String(holoImportedModel?.label || 'imported model').toLowerCase(); updateQuizHud(); return; }
+  const asset = HOLO_ASSETS[key] || HOLO_ASSETS.heart;
+  const pool = asset.parts.map(p => p.name);
+  holoQuiz.target = pool[Math.floor(Math.random() * pool.length)];
+  holoQuiz.answered = false;
+  updateQuizHud();
+  logHoloEvent(`Quiz target · ${holoQuiz.target}`);
+}
+
+function toggleHoloQuiz() {
+  holoQuiz.active = !holoQuiz.active;
+  if (holoQuiz.active) {
+    holoQuiz.score = 0; holoQuiz.total = 0; nextQuizQuestion();
+    showToast('Hologram quiz started', 'ok');
+    logHoloEvent('Quiz started');
+  } else {
+    showToast('Hologram quiz stopped', 'ok');
+    logHoloEvent('Quiz stopped');
+  }
+  updateQuizHud();
+}
+
+function evaluateQuizSelection(partName) {
+  if (!holoQuiz.active || !holoQuiz.target || holoQuiz.answered) return;
+  holoQuiz.total += 1;
+  holoQuiz.answered = true;
+  if (String(partName).toLowerCase() === String(holoQuiz.target).toLowerCase()) {
+    holoQuiz.score += 1;
+    showToast('✅ Correct selection', 'ok');
+    logHoloEvent(`Quiz correct · ${partName}`);
+  } else {
+    showToast(`❌ Wrong · expected ${holoQuiz.target}`, 'err');
+    logHoloEvent(`Quiz wrong · ${partName} / ${holoQuiz.target}`);
+  }
+  updateQuizHud();
+  setTimeout(() => { if (holoQuiz.active) nextQuizQuestion(); }, 1200);
+}
+
+function toggleHoloTour() {
+  holoTour.active = !holoTour.active;
+  setToolActive('tour', holoTour.active);
+  if (holoTour.timer) { clearInterval(holoTour.timer); holoTour.timer = null; }
+  if (!holoTour.active) {
+    showToast('Guided tour stopped', 'ok');
+    logHoloEvent('Tour stopped');
+    return;
+  }
+  holoTour.index = 0;
+  const step = async () => {
+    if ((holoScene?.asset || 'heart') === 'imported') { showToast('Tour mode unsupported for imported model parts', 'err'); toggleHoloTour(); return; }
+    const asset = HOLO_ASSETS[holoScene?.asset || 'heart'] || HOLO_ASSETS.heart;
+    const parts = asset.parts;
+    if (!parts.length) return;
+    const part = parts[holoTour.index % parts.length].name;
+    holoTour.index += 1;
+    await hologramAction('select_part', part);
+    logHoloEvent(`Tour focus · ${part}`);
+  };
+  step();
+  holoTour.timer = setInterval(step, 2800);
+  showToast('Guided tour started', 'ok');
+  logHoloEvent('Tour started');
+}
+
+function loadSavedBookmarksMeta() {
+  try {
+    holoBookmarks = JSON.parse(localStorage.getItem('holoBookmarks') || '[]');
+  } catch { holoBookmarks = []; }
+  const label = document.getElementById('bookmarkStatus');
+  if (label) label.textContent = holoBookmarks.length ? `BOOKMARK · ${holoBookmarks.length} SAVED` : 'BOOKMARK · NONE';
+}
+
+function saveHoloBookmark() {
+  if (!holoScene) return;
+  const shot = { state: holoScene, ts: Date.now() };
+  holoBookmarks.unshift(shot);
+  holoBookmarks = holoBookmarks.slice(0, 5);
+  localStorage.setItem('holoBookmarks', JSON.stringify(holoBookmarks));
+  loadSavedBookmarksMeta();
+  showToast('Scene bookmark saved', 'ok');
+  logHoloEvent('Bookmark saved');
+}
+
+async function loadHoloBookmark() {
+  if (!holoBookmarks.length) { showToast('No bookmark saved', 'err'); return; }
+  const shot = holoBookmarks[0];
+  if (!shot?.state) return;
+  const entries = Object.entries(shot.state);
+  for (const [k,v] of entries) {
+    if (['active_layer','layers','mode'].includes(k)) continue;
+    if (k === 'asset') { await hologramAction('set_asset', v); continue; }
+    if (k === 'focus') { await hologramAction('focus_mode', v); continue; }
+    if (k === 'selected_part' && v) { await hologramAction('select_part', v); continue; }
+    if (k === 'explode') { await hologramAction('set_explode', v); continue; }
+  }
+  showToast('Scene bookmark restored', 'ok');
+  logHoloEvent('Bookmark restored');
+}
+
+async function afterPartSelected(partName) {
+  evaluateQuizSelection(partName);
+  logHoloEvent(`Selected · ${partName}`);
+}
+
+async function refreshHologramState() {
+  try {
+    const r = await fetch(`/api/hologram/state?session_id=${encodeURIComponent(SESSION_ID)}`);
+    const state = await r.json();
+    applyHologramScene(state);
+  } catch {
+    // HUD is optional.
+  }
+}
+
+async function hologramAction(action, value = null) {
+  try {
+    const r = await fetch('/api/hologram/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID, action, value }),
+    });
+    const d = await r.json();
+    if (d && d.state) {
+      applyHologramScene(d.state);
+      syncRoomScene();
+      showToast(`HUD · ${action.replaceAll('_', ' ')}`, 'ok');
+    }
+  } catch {
+    showToast('HUD update failed', 'err');
+  }
+}
+
+async function runHologramCommand(command) {
+  appendMessage('user', `/holo ${command}`);
+  const botMsg = appendMessage('bot', 'Applying hologram scene command…');
+  const bubble = botMsg.querySelector('.msg-bubble');
+  const c = String(command || '').toLowerCase();
+  if (c.includes('quiz')) { toggleHoloQuiz(); bubble.textContent = 'Quiz mode toggled.'; return; }
+  if (c.includes('tour')) { toggleHoloTour(); bubble.textContent = 'Tour mode toggled.'; return; }
+  if (c.includes('save bookmark')) { saveHoloBookmark(); bubble.textContent = 'Bookmark saved.'; return; }
+  if (c.includes('load bookmark')) { await loadHoloBookmark(); bubble.textContent = 'Bookmark restored.'; return; }
+  try {
+    const r = await fetch('/api/hologram/command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID, command }),
+    });
+    const d = await r.json();
+    if (d && d.state) { applyHologramScene(d.state); syncRoomScene(); }
+    const parsed = d?.parsed?.action || 'noop';
+    const focus = d?.state?.focus || 'auto';
+    bubble.textContent = `Scene updated · ${parsed.replaceAll('_', ' ')} · focus ${String(focus).toUpperCase()}`;
+    showToast('Advanced hologram scene updated', 'ok');
+  } catch {
+    bubble.textContent = 'Unable to update hologram scene.';
+    showToast('Command failed', 'err');
+  }
+}
+
+function quickFocus() {
+  const target = prompt('Focus on which part / topic?','core system');
+  if (target === null) return;
+  hologramAction('focus_mode', target.trim() || 'auto');
+}
+
+function setToolActive(tool, active) {
+  const btn = document.querySelector(`.holo-tool-btn[data-tool="${tool}"]`);
+  if (btn) btn.classList.toggle('active', !!active);
+}
+
+function applyHologramScene(state) {
+  holoScene = state || {};
+  const panel = document.getElementById('holoPanel');
+  const wrap = document.querySelector('.holo-figure-wrap');
+  if (!panel || !wrap) return;
+
+  const mode = String(holoScene.mode || 'tutor').toUpperCase();
+  const focus = String(holoScene.focus || 'auto').toUpperCase();
+  const explode = Number(holoScene.explode || 0);
+  const layer = String(holoScene.active_layer || holoScene.layers?.[holoScene.layer_index || 0] || 'surface').toUpperCase();
+  const scan = !!holoScene.scan;
+  const xray = !!holoScene.xray;
+  const orbit = !!holoScene.orbit;
+  const panels = holoScene.panels !== false;
+  const compare = !!holoScene.compare;
+  const asset = String(holoScene.asset || 'heart').toLowerCase();
+
+  panel.dataset.panels = panels ? 'true' : 'false';
+  panel.dataset.model3d = holo3dEnabled ? 'true' : 'false';
+  panel.classList.toggle('scan-mode', scan);
+  wrap.classList.toggle('orbiting', orbit);
+  wrap.classList.toggle('xray', xray);
+  wrap.classList.toggle('focus-lock', focus !== 'AUTO');
+
+  setToolActive('orbit', orbit);
+  setToolActive('scan', scan);
+  setToolActive('xray', xray);
+  setToolActive('panels', panels);
+  setToolActive('compare', compare);
+  document.querySelectorAll('.holo-asset-btn').forEach(b => b.classList.toggle('active', b.dataset.asset === asset));
+  setToolActive('room', roomState.connected);
+
+  document.getElementById('hudAsset').textContent = asset.toUpperCase();
+  document.getElementById('hudMode').textContent = compare ? `${mode} / COMPARE` : mode;
+  document.getElementById('hudFocus').textContent = focus;
+  document.getElementById('hudExplode').textContent = `${explode}%`;
+  document.getElementById('hudLayer').textContent = layer;
+  document.getElementById('hudScan').textContent = scan ? 'ON' : 'OFF';
+  document.getElementById('hudXray').textContent = xray ? 'ON' : 'OFF';
+  const sliceOn = !!holoScene.section_enabled;
+  const freezeOn = !!holoScene.freeze;
+  const labelsOn = holoScene.labels !== false;
+  const speed = Number(holoScene.orbit_speed || 1);
+  const sliceEl = document.getElementById('hudSlice');
+  const freezeEl = document.getElementById('hudFreeze');
+  const labelsEl = document.getElementById('hudLabels');
+  const speedEl = document.getElementById('hudSpeed');
+  if (sliceEl) sliceEl.textContent = sliceOn ? `${String(holoScene.section_axis||'y').toUpperCase()} ${Number(holoScene.section_pos||50)}%` : 'OFF';
+  if (freezeEl) freezeEl.textContent = freezeOn ? 'ON' : 'OFF';
+  if (labelsEl) labelsEl.textContent = labelsOn ? 'ON' : 'OFF';
+  if (speedEl) speedEl.textContent = `${speed.toFixed(1)}×`;
+  setToolActive('slice', sliceOn);
+  setToolActive('freeze', freezeOn);
+  setToolActive('labels', labelsOn);
+  setToolActive('wire', Number(holoScene.wire_density||1) >= 2);
+  setToolActive('measure', !!holoScene.measure_enabled);
+  setToolActive('clip', !!holoScene.clip_enabled);
+  setToolActive('explode-anim', !!holoScene.explode_anim);
+  (function(){
+    const mEl=document.getElementById('hudMeasure');
+    const cEl=document.getElementById('hudClip');
+    const aEl=document.getElementById('hudAnim');
+    if(mEl){
+      if(!holoScene.measure_enabled) mEl.textContent='OFF';
+      else if(holoScene.measure_a&&holoScene.measure_b) mEl.textContent=(holoScene.measure_distance!=null?Number(holoScene.measure_distance).toFixed(2):'…')+' u';
+      else if(holoScene.measure_a) mEl.textContent='A:'+String(holoScene.measure_a).slice(0,8);
+      else mEl.textContent='PICK A';
+    }
+    if(cEl){
+      if(!holoScene.clip_enabled) cEl.textContent='OFF';
+      else {
+        const cl=holoScene.clip_layers||{};
+        cEl.textContent=['surface','structure','internal','labels'].filter(k=>cl[k]!==false).map(k=>k[0].toUpperCase()).join('')||'NONE';
+      }
+    }
+    if(aEl) aEl.textContent=holoScene.explode_anim?'PLAY':'OFF';
+  })();
+  document.getElementById('cardObject').textContent = `${asset.toUpperCase()} MODEL`;
+  document.getElementById('cardFocus').textContent = `FOCUS: ${focus}`;
+  document.getElementById('cardLayer').textContent = `LAYER: ${layer}`;
+  document.getElementById('cardExplode').textContent = `EXPLODE: ${explode}%`;
+  document.getElementById('cardOrbit').textContent = `ORBIT: ${orbit ? 'ON' : 'OFF'}`;
+  document.getElementById('cardScan').textContent = `SCAN: ${scan ? 'ON' : 'OFF'}`;
+  document.getElementById('cardXray').textContent = `X-RAY: ${xray ? 'ON' : 'OFF'}`;
+  document.getElementById('hudSelectedPart').textContent = `SELECTED · ${String(holoScene.selected_part || 'none').toUpperCase()}`;
+  document.getElementById('holoMicroTag').textContent = `SCENE · ${asset.toUpperCase()} · ${mode}${compare ? ' · COMPARE' : ''}`;
+  updateQuizHud();
+
+  // Scene polish while preserving user gesture transform.
+  const explodeScale = 1 + (explode / 300);
+  const focusBoost = focus !== 'AUTO' ? 1.04 : 1;
+  wrap.style.setProperty('--scene-scale', String((explodeScale * focusBoost).toFixed(3)));
+  renderHologramTransform();
+}
+
+(function initVideoUpload() {
+  const input = document.getElementById('vidFileInput');
+  if (!input) return;
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    // Update holo panel video
+    const v = document.getElementById('holoVideo');
+    if (v) { v.src = url; v.load(); }
+    // Update fullscreen video
+    const fv = document.getElementById('fsVideo');
+    if (fv) { fv.src = url; fv.load(); }
+    showToast(`Video loaded: ${file.name}`, 'ok');
+    input.value = '';
+  });
+})();
+
+// ═══════════════════════════════════════════════════════
+//  FULLSCREEN
+// ═══════════════════════════════════════════════════════
+function openFullscreen() {
+  const overlay = document.getElementById('fsOverlay');
+  const holoV   = document.getElementById('holoVideo');
+  const fsV     = document.getElementById('fsVideo');
+  const panel   = document.getElementById('holoPanel');
+
+  // Sync src and state
+  if (holoV.src) { fsV.src = holoV.src; }
+  const state = panel.dataset.state || 'standby';
+  syncFullscreenState(state);
+
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  // Play if speaking
+  if (state === 'speaking') {
+    fsV.currentTime = holoV.currentTime;
+    fsV.play().catch(() => {});
+  }
+}
+
+function closeFullscreen() {
+  const overlay = document.getElementById('fsOverlay');
+  const fsV     = document.getElementById('fsVideo');
+  overlay.classList.remove('active');
+  overlay.classList.remove('speaking');
+  fsV.pause();
+  document.body.style.overflow = '';
+}
+
+function syncFullscreenState(state) {
+  const overlay   = document.getElementById('fsOverlay');
+  const fsStatus  = document.getElementById('fsStatusText');
+  const fsV       = document.getElementById('fsVideo');
+  const STATUS_MAP = { idle:'STANDBY', standby:'ONLINE', listening:'LISTENING', thinking:'PROCESSING', speaking:'SPEAKING' };
+
+  if (state === 'speaking') {
+    overlay.classList.add('speaking');
+    fsV.play().catch(() => {});
+  } else {
+    overlay.classList.remove('speaking');
+    fsV.pause();
+  }
+  if (fsStatus) fsStatus.textContent = STATUS_MAP[state] || state.toUpperCase();
+}
+
+// ═══════════════════════════════════════════════════════
+//  LANG BADGE (per-element version for tile layout)
+// ═══════════════════════════════════════════════════════
+function showLangBadgeEl(el, lang) {
+  if (!el) return;
+  const map = { en:'🇮🇳 EN', ta:'🇮🇳 தமிழ்', tanglish:'🇮🇳 TGL' };
+  el.textContent = map[lang] || lang;
+  el.className   = `lang-badge show lang-${lang}`;
+}
+
+function showLangBadge(lang) {
+  const badge = document.getElementById('langBadge');
+  if (badge) showLangBadgeEl(badge, lang);
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = 'toast', 3000);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+flask>=3.0.0
+weaviate-client>=4.23.0,<5.0.0
+sentence-transformers>=3.0.0
+pymupdf>=1.24.0
+python-docx>=1.1.0
+python-pptx>=0.6.23
+openpyxl>=3.1.2
+ebooklib>=0.18.0
+beautifulsoup4>=4.12.0
+langchain-text-splitters>=0.2.0
+langgraph>=0.2.0
+requests>=2.31.0
+hf_xet>=1.0.0
+
+# --- LLM: local Qwen3-8B (replaces Ollama/phi3:mini) ---
+transformers==4.57.3
+accelerate>=0.30.0
+bitsandbytes>=0.43.0
+torch>=2.2.0
+
+# --- STT: facebook/seamless-m4t-v2-large (replaces faster-whisper) ---
+torchaudio>=2.2.0
+sentencepiece>=0.2.0
+
+# --- TTS: Qwen3-TTS-0.6B (English/Tanglish) + indic-parler-tts (Tamil) ---
+qwen-tts>=0.1.0
+soundfile>=0.12.1
+# Optional Tamil TTS; it currently conflicts with qwen-tts' transformers pin.
+# Install in a separate environment when Tamil neural TTS is required:
+# git+https://github.com/huggingface/parler-tts.git
+
+# --- ReAct web fallback ---
+wikipedia>=1.4.0
+duckduckgo-search>=6.0.0
+
+# --- Emotion + gesture detection ---
+opencv-python-headless>=4.9.0
+mediapipe>=0.10.9
+onnxruntime>=1.17.0
+numpy>=1.24.0
+
+# --- Visual aids: chart/diagram rendering ---
+matplotlib>=3.8.0
+
+# --- Visual query: Moondream2 (student shows a diagram/page) ---
+einops>=0.7.0
+pillow>=10.0.0
+
+# --- Image gen: FLUX.1-schnell (real-time example images) — GPU only ---
+# --- Video gen: Wan2.1-T2V-1.3B (example animations) — GPU only ---
+diffusers>=0.31.0
+
+# Tests
+pytest>=8.0.0
+
+# Post-generation RAG grounding verifier
+lettucedetect>=0.2.0
+
+# Optional local System-One decision model (recommended for offline HOLO-GURU)
+# Install separately when enabling LAYA: pip install laya

@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^pytest -q tests\\\\test_classroom_orchestrator\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

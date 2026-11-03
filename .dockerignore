@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+uploaded_books/
+chroma_db/
+personalization.db
+ssl_cert.pem
+ssl_key.pem
+.cache/
+*.log
+.DS_Store

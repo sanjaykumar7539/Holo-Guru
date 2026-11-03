@@ -1,0 +1,55 @@
+# HOLO-GURU + Weaviate
+# Start database + app: docker compose up -d --build
+# CPU-only users: remove the `deploy` GPU reservation block under holo-guru.
+
+services:
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.39.2
+    container_name: holo-guru-weaviate
+    restart: unless-stopped
+    command: ["--host", "0.0.0.0", "--port", "8080", "--scheme", "http"]
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    volumes:
+      - weaviate-data:/var/lib/weaviate
+    environment:
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      QUERY_DEFAULTS_LIMIT: "25"
+      CLUSTER_HOSTNAME: node1
+
+  holo-guru:
+    build: .
+    image: holo-guru:latest
+    container_name: holo-guru
+    restart: unless-stopped
+    depends_on:
+      - weaviate
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+      - WEAVIATE_HOST=weaviate
+      - WEAVIATE_HTTP_PORT=8080
+      - WEAVIATE_GRPC_PORT=50051
+    ports:
+      - "7000:7000"
+    volumes:
+      - hf-cache:/app/.cache/huggingface
+      - ./uploaded_books:/app/uploaded_books
+      - ./personalization.db:/app/personalization.db
+      - ./models:/app/models
+      - ./ssl_cert.pem:/app/ssl_cert.pem
+      - ./ssl_key.pem:/app/ssl_key.pem
+    mem_limit: 8g
+
+volumes:
+  hf-cache:
+  weaviate-data:
